@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased m-0;
+  }
+}
+
+@layer components {
+  /* Custom component styles */
+  .btn-primary {
+    @apply px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors duration-200;
+  }
+
+  .btn-outline {
+    @apply px-6 py-3 border-2 border-primary-600 text-primary-600 font-medium rounded-lg hover:bg-primary-50 transition-colors duration-200;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6;
+  }
+}
+
+@layer utilities {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* Cart & TikTok Add-to-Cart Animation Styles */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tiktokCartBounce {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    transform: scale(1.45) rotate(-12deg);
+  }
+  40% {
+    transform: scale(0.88) rotate(8deg);
+  }
+  60% {
+    transform: scale(1.25) rotate(-4deg);
+  }
+  80% {
+    transform: scale(0.95) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes tiktokBadgePop {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.6);
+  }
+  60% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes tiktokFloatPlusOne {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -16px) scale(1.25);
+  }
+  80% {
+    opacity: 0.9;
+    transform: translate(-50%, -32px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -46px) scale(0.7);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cart-bounce {
+  animation: tiktokCartBounce 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.cart-badge-pop {
+  animation: tiktokBadgePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.tiktok-plus-badge {
+  animation: tiktokFloatPlusOne 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+/* Modal & Bottom Sheet Animations */
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bottomSheetSlideUp {
+  from {
+    opacity: 0.6;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-overlay {
+  animation: fadeInOverlay 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-modal-scale {
+  animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-bottom-sheet {
+  animation: bottomSheetSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
