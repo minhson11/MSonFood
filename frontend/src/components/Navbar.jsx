@@ -27,8 +27,15 @@ const Navbar = () => {
       <div className="container-custom">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-black text-orange-600 flex items-center gap-2">
-            <span>MSon Food</span>
+          <Link to="/" className="text-2xl font-black flex items-center gap-2.5 group">
+            <img 
+              src="/logo-icon.png" 
+              alt="MSon Food" 
+              className="h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-105" 
+            />
+            <span className="font-extrabold tracking-tight">
+              <span className="text-orange-600">MSon</span> <span className="text-red-700">Food</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -37,7 +44,12 @@ const Navbar = () => {
               Trang chủ
             </NavLink>
             <NavLink to="/menu" className={getNavLinkClass}>
-              Thực đơn
+              <span className="relative inline-flex items-center">
+                Thực đơn
+                <span className="ml-1.5 px-1.5 py-0.2 bg-red-600 text-white text-[10px] font-black rounded-full uppercase tracking-wider">
+                  HOT
+                </span>
+              </span>
             </NavLink>
             <NavLink to="/about" className={getNavLinkClass}>
               Về chúng tôi

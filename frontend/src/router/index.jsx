@@ -26,6 +26,7 @@ import ManageOrders from '../pages/admin/ManageOrders';
 import ManageToppings from '../pages/admin/ManageToppings';
 import ManageUsers from '../pages/admin/ManageUsers';
 import ManageCategories from '../pages/admin/ManageCategories';
+import ReviewsManager from '../pages/admin/ReviewsManager';
 
 const router = createBrowserRouter([
   {
@@ -149,6 +150,10 @@ const router = createBrowserRouter([
       {
         path: 'categories',
         element: <ManageCategories />,
+      },
+      {
+        path: 'reviews',
+        element: <ReviewsManager />,
       },
       // Add more admin routes here
     ],

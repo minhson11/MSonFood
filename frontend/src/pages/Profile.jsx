@@ -596,7 +596,7 @@ const Profile = () => {
                     >
                       {loading ? (
                         <>
-                          <Loading size="sm" />
+                          <Loading size="sm" color="white" />
                           <span>Đang lưu...</span>
                         </>
                       ) : (
@@ -711,7 +711,7 @@ const Profile = () => {
                     className="bg-orange-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50"
                     disabled={loading}
                   >
-                    {loading ? <Loading size="sm" /> : 'Đổi mật khẩu'}
+                    {loading ? <Loading size="sm" color="white" /> : 'Đổi mật khẩu'}
                   </button>
                 </form>
               </div>

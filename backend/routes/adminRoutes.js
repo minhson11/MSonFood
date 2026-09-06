@@ -30,6 +30,8 @@ router.get('/coupons', couponController.getAllCoupons);
 
 // Review management routes
 router.get('/reviews', reviewController.getAllReviews);
+router.get('/reviews/food/:foodId', reviewController.adminGetFoodReviews);
+router.put('/reviews/:id/toggle-hide', reviewController.adminToggleHideReview);
 router.delete('/reviews/:id', reviewController.adminDeleteReview);
 
 module.exports = router;

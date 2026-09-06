@@ -58,7 +58,7 @@ const Login = () => {
       <div className="relative z-10 w-full max-w-[440px] flex flex-col items-center">
         
         {/* Floating Brand Cutlery Icon Badge */}
-        <div className="w-14 h-14 bg-[#9a3407] rounded-2xl shadow-xl shadow-[#9a3407]/35 border-2 border-white/60 flex items-center justify-center -mb-7 z-20 transform transition-transform hover:scale-105">
+        <div className="w-14 h-14 bg-[#9a3407] rounded-2xl shadow-xl shadow-[#9a3407]/35 border-2 border-white/60 flex items-center justify-center -mb-7 z-20 transition-colors">
           <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8h2.5v-8H23V6c0-2.21-1.79-4-4-4s-4 1.79-4 4zm5 0v3h-3.5V6c0-1.1.9-2 2-2s1.5.9 1.5 2z" />
           </svg>
@@ -71,13 +71,13 @@ const Login = () => {
           <div className="grid grid-cols-2 border-b border-gray-100">
             <Link
               to="/login"
-              className="py-4 text-center font-serif text-[17px] font-bold text-[#1e1e1e] border-b-[3px] border-[#9a3407] transition-all"
+              className="py-4 text-center font-serif text-[17px] font-bold text-[#1e1e1e] border-b-[3px] border-[#9a3407] transition-colors"
             >
               Đăng Nhập
             </Link>
             <Link
               to="/register"
-              className="py-4 text-center font-serif text-[17px] font-medium text-gray-400 hover:text-gray-700 border-b-[3px] border-transparent transition-all"
+              className="py-4 text-center font-serif text-[17px] font-medium text-gray-400 hover:text-gray-700 border-b-[3px] border-transparent transition-colors"
             >
               Đăng Ký
             </Link>
@@ -106,7 +106,7 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Address Input */}
               <div>
-                <div className="bg-[#edf2fe] hover:bg-[#e5ecfc] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#9a3407]/30 focus-within:border-[#9a3407] border border-transparent rounded-2xl flex items-center px-4 py-3.5 transition-all">
+                <div className="bg-[#edf2fe] hover:bg-[#e5ecfc] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#9a3407]/30 focus-within:border-[#9a3407] border border-transparent rounded-2xl flex items-center px-4 py-3.5 transition-colors">
                   <svg className="w-5 h-5 text-[#7f8da4] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
@@ -124,7 +124,7 @@ const Login = () => {
 
               {/* Password Input */}
               <div>
-                <div className="bg-[#edf2fe] hover:bg-[#e5ecfc] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#9a3407]/30 focus-within:border-[#9a3407] border border-transparent rounded-2xl flex items-center px-4 py-3.5 transition-all">
+                <div className="bg-[#edf2fe] hover:bg-[#e5ecfc] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#9a3407]/30 focus-within:border-[#9a3407] border border-transparent rounded-2xl flex items-center px-4 py-3.5 transition-colors">
                   <svg className="w-5 h-5 text-[#7f8da4] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -180,10 +180,10 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#9a3407] hover:bg-[#832c05] active:scale-[0.99] text-white font-serif font-bold text-[17px] py-3.5 rounded-full shadow-lg shadow-[#9a3407]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                className="w-full h-[52px] bg-[#9a3407] hover:bg-[#832c05] text-white font-serif font-bold text-[17px] rounded-full shadow-lg shadow-[#9a3407]/25 transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed mt-2"
               >
                 {loading ? (
-                  <Loading size="sm" />
+                  <Loading size="sm" color="white" text="Đang đăng nhập..." />
                 ) : (
                   <>
                     <span>Đăng Nhập</span>

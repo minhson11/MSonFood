@@ -92,8 +92,8 @@ const ResetPassword = () => {
               />
             </div>
 
-            <button type="submit" className="w-full btn-primary" disabled={loading}>
-              {loading ? <Loading size="sm" /> : 'Đặt Lại Mật Khẩu'}
+            <button type="submit" className="w-full h-[50px] btn-primary flex items-center justify-center" disabled={loading}>
+              {loading ? <Loading size="sm" color="white" text="Đang đặt lại mật khẩu..." /> : 'Đặt Lại Mật Khẩu'}
             </button>
           </form>
 

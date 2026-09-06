@@ -328,6 +328,63 @@ exports.adminDeleteReview = async (req, res, next) => {
   }
 };
 
+// @desc    Toggle hide/show review (Admin)
+// @route   PUT /api/admin/reviews/:id/toggle-hide
+// @access  Private/Admin
+exports.adminToggleHideReview = async (req, res, next) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đánh giá'
+      });
+    }
+
+    review.isHidden = !review.isHidden;
+    await review.save();
+
+    res.status(200).json({
+      success: true,
+      message: review.isHidden ? 'Đã ẩn đánh giá' : 'Đã hiển thị đánh giá',
+      data: review
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get reviews for a food (Admin) - includes hidden reviews
+// @route   GET /api/admin/reviews/food/:foodId
+// @access  Private/Admin
+exports.adminGetFoodReviews = async (req, res, next) => {
+  try {
+    const { rating } = req.query;
+
+    const query = { food: req.params.foodId };
+    if (rating) {
+      query.rating = parseInt(rating);
+    }
+
+    const reviews = await Review.find(query)
+      .populate('user', 'name email avatar')
+      .sort({ createdAt: -1 });
+
+    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      averageRating: parseFloat(averageRating),
+      data: reviews
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Helper function to update food rating
 async function updateFoodRating(foodId) {
   try {

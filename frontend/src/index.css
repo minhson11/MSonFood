@@ -169,3 +169,70 @@
   animation: bottomSheetSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Hero Floating Badges */
+@keyframes heroFloat1 {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes heroFloat2 {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-float-badge-1 {
+  animation: heroFloat1 3.8s ease-in-out infinite;
+}
+
+.animate-float-badge-2 {
+  animation: heroFloat2 4.2s ease-in-out infinite;
+}
+
+/* Menu Page Floating Badges */
+@keyframes menuFloat1 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(-1deg);
+  }
+}
+
+@keyframes menuFloat2 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(7px) rotate(1deg);
+  }
+}
+
+@keyframes menuFloat3 {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.02);
+  }
+}
+
+.animate-float-menu-1 {
+  animation: menuFloat1 4.2s ease-in-out infinite;
+}
+
+.animate-float-menu-2 {
+  animation: menuFloat2 3.8s ease-in-out infinite 0.6s;
+}
+
+.animate-float-menu-3 {
+  animation: menuFloat3 4.6s ease-in-out infinite 1.2s;
+}
+

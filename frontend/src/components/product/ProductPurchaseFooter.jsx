@@ -50,7 +50,7 @@ const ProductPurchaseFooter = ({
             <button
               type="button"
               onClick={onAddToCart}
-              className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 py-3.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition active:scale-98 shadow-2xs"
+              className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 py-3.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors duration-150 shadow-2xs"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -66,7 +66,7 @@ const ProductPurchaseFooter = ({
             <button
               type="button"
               onClick={onBuyNow}
-              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-3.5 px-4 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-md hover:shadow-lg active:scale-98"
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-3.5 px-4 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-colors duration-150 shadow-md"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

@@ -1,5 +1,6 @@
 const Food = require('../models/Food');
 const Category = require('../models/Category');
+const Topping = require('../models/Topping');
 
 // @desc    Get all foods with filters
 // @route   GET /api/foods

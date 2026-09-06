@@ -48,6 +48,8 @@ export const adminCouponApi = {
 // Review Management (Admin)
 export const adminReviewApi = {
   getAllReviews: (params) => api.get('/admin/reviews', { params }),
+  getFoodReviews: (foodId, params) => api.get(`/admin/reviews/food/${foodId}`, { params }),
+  toggleHideReview: (id) => api.put(`/admin/reviews/${id}/toggle-hide`),
   deleteReview: (id) => api.delete(`/admin/reviews/${id}`),
 };
 

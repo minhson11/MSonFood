@@ -1,6 +1,44 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../services/api';
 
 const About = () => {
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalUsers: 0,
+    totalFoods: 0,
+    avgRating: 4.9,
+    totalReviews: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStats = async () => {
+      try {
+        const response = await api.get('/stats');
+        const data = response?.data || response;
+        if (isMounted && data) {
+          setStats({
+            totalOrders: data.totalOrders ?? 0,
+            totalUsers: data.totalUsers ?? 0,
+            totalFoods: data.totalFoods ?? 0,
+            avgRating: data.avgRating ?? 4.9,
+            totalReviews: data.totalReviews ?? 0,
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching about stats:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   return (
     <div className="bg-white min-h-screen">
       {/* ================= 1. HERO SECTION ================= */}
@@ -284,40 +322,63 @@ const About = () => {
       <section className="py-6 pb-16">
         <div className="container-custom max-w-4xl mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Stat 1 */}
-            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center">
+            {/* Stat 1: Đơn hàng */}
+            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center hover:shadow-xs transition-shadow">
               <div className="text-2xl md:text-3xl font-black text-gray-900 mb-1 tracking-tight">
-                10000+
+                {loading ? (
+                  <span className="text-gray-400 text-xl">...</span>
+                ) : stats.totalOrders > 0 ? (
+                  `${stats.totalOrders.toLocaleString()}${stats.totalOrders >= 5 ? '+' : ''}`
+                ) : (
+                  '0'
+                )}
               </div>
               <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">
                 ĐƠN HÀNG
               </div>
             </div>
 
-            {/* Stat 2 */}
-            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center">
+            {/* Stat 2: Khách hàng */}
+            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center hover:shadow-xs transition-shadow">
               <div className="text-2xl md:text-3xl font-black text-gray-900 mb-1 tracking-tight">
-                5000+
+                {loading ? (
+                  <span className="text-gray-400 text-xl">...</span>
+                ) : stats.totalUsers > 0 ? (
+                  `${stats.totalUsers.toLocaleString()}${stats.totalUsers >= 5 ? '+' : ''}`
+                ) : (
+                  '0'
+                )}
               </div>
               <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">
                 KHÁCH HÀNG
               </div>
             </div>
 
-            {/* Stat 3 */}
-            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center">
+            {/* Stat 3: Món ăn */}
+            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center hover:shadow-xs transition-shadow">
               <div className="text-2xl md:text-3xl font-black text-gray-900 mb-1 tracking-tight">
-                150
+                {loading ? (
+                  <span className="text-gray-400 text-xl">...</span>
+                ) : (
+                  stats.totalFoods.toLocaleString()
+                )}
               </div>
               <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">
                 MÓN ĂN
               </div>
             </div>
 
-            {/* Stat 4 */}
-            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center">
-              <div className="text-2xl md:text-3xl font-black text-gray-900 mb-1 tracking-tight">
-                4.9
+            {/* Stat 4: Đánh giá sao */}
+            <div className="bg-[#edf4fb] border border-blue-100/70 rounded-2xl py-6 px-4 text-center hover:shadow-xs transition-shadow">
+              <div className="text-2xl md:text-3xl font-black text-gray-900 mb-1 tracking-tight flex items-center justify-center gap-1">
+                {loading ? (
+                  <span className="text-gray-400 text-xl">...</span>
+                ) : (
+                  <>
+                    <span>{stats.avgRating ? stats.avgRating.toFixed(1) : '5.0'}</span>
+                    <span className="text-amber-500 text-xl leading-none">★</span>
+                  </>
+                )}
               </div>
               <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">
                 ĐÁNH GIÁ SAO

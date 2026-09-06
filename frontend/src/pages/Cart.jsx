@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useCartStore from '../store/cartStore';
 import useAuth from '../hooks/useAuth';
@@ -5,7 +6,37 @@ import useAuth from '../hooks/useAuth';
 const Cart = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { items, removeItem, updateQuantity, increaseQuantity, decreaseQuantity, clearCart, getTotal } = useCartStore();
+  const { items, removeItem, updateQuantity, increaseQuantity, decreaseQuantity, clearCart } = useCartStore();
+
+  const getItemKey = (item, index) => item.itemKey || `${item.food._id || item.food.id}-${index}`;
+
+  // State lưu danh sách itemKey của các món được tích chọn để thanh toán
+  const [selectedKeys, setSelectedKeys] = useState(() =>
+    items.map((item, idx) => getItemKey(item, idx))
+  );
+
+  // Đồng bộ selectedKeys khi items thay đổi (loại bỏ key của món đã bị xóa)
+  useEffect(() => {
+    const currentKeys = items.map((item, idx) => getItemKey(item, idx));
+    setSelectedKeys((prev) => prev.filter((k) => currentKeys.includes(k)));
+  }, [items]);
+
+  const allKeys = items.map((item, idx) => getItemKey(item, idx));
+  const isAllSelected = items.length > 0 && selectedKeys.length === items.length;
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedKeys([]);
+    } else {
+      setSelectedKeys(allKeys);
+    }
+  };
+
+  const handleToggleItem = (key) => {
+    setSelectedKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
 
   const handleQuantityChange = (foodId, newQuantity) => {
     const quantity = parseInt(newQuantity);
@@ -28,18 +59,31 @@ const Cart = () => {
     }
   };
 
+  // Lọc ra các món đang được chọn để tính tiền & chuyển sang checkout
+  const selectedItems = items.filter((item, idx) =>
+    selectedKeys.includes(getItemKey(item, idx))
+  );
+
+  const subtotal = selectedItems.reduce((acc, item) => {
+    const unitPrice = item.food.finalPrice || item.food.price || 0;
+    return acc + unitPrice * item.quantity;
+  }, 0);
+
+  const shippingFee = selectedItems.length > 0 ? 15000 : 0;
+  const total = subtotal + shippingFee;
+
   const handleCheckout = () => {
-    if (!isAuthenticated) {
-      // Save intended destination
-      navigate('/login', { state: { from: '/checkout' } });
+    if (selectedItems.length === 0) {
+      alert('Vui lòng tích chọn ít nhất một món ăn để tiến hành thanh toán.');
       return;
     }
-    navigate('/checkout');
+    if (!isAuthenticated) {
+      // Save intended destination
+      navigate('/login', { state: { from: '/checkout', selectedItems } });
+      return;
+    }
+    navigate('/checkout', { state: { selectedItems } });
   };
-
-  const subtotal = getTotal();
-  const shippingFee = 15000;
-  const total = subtotal + shippingFee;
 
   if (items.length === 0) {
     return (
@@ -67,26 +111,58 @@ const Cart = () => {
         <div className="lg:col-span-2">
           <div className="card">
             {/* Header */}
-            <div className="flex justify-between items-center mb-4 pb-4 border-b">
-              <h2 className="text-xl font-semibold">Món trong giỏ ({items.length})</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Món trong giỏ ({items.length})
+                </h2>
+                {/* Nút chọn tất cả ở dưới chữ "Món trong giỏ" */}
+                <label className="inline-flex items-center gap-2.5 mt-2 cursor-pointer select-none group">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={handleToggleSelectAll}
+                    className="w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500 cursor-pointer accent-orange-600"
+                  />
+                  <span className="text-sm font-semibold text-gray-700 group-hover:text-orange-600 transition-colors">
+                    Chọn tất cả ({selectedItems.length}/{items.length} món)
+                  </span>
+                </label>
+              </div>
+
               {items.length > 0 && (
-                <button
-                  onClick={() => {
-                    if (window.confirm('Xóa tất cả món khỏi giỏ hàng?')) {
-                      clearCart();
-                    }
-                  }}
-                  className="text-sm text-red-600 hover:text-red-700"
-                >
-                  Xóa Giỏ Hàng
-                </button>
+                <div className="flex items-center gap-3">
+                  {selectedKeys.length > 0 && selectedKeys.length < items.length && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Xóa ${selectedItems.length} món đã chọn khỏi giỏ hàng?`)) {
+                          selectedKeys.forEach((k) => removeItem(k));
+                        }
+                      }}
+                      className="text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline"
+                    >
+                      Xóa món đã chọn ({selectedItems.length})
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Xóa tất cả món khỏi giỏ hàng?')) {
+                        clearCart();
+                      }
+                    }}
+                    className="text-xs text-red-600 hover:text-red-700 hover:underline"
+                  >
+                    Xóa tất cả
+                  </button>
+                </div>
               )}
             </div>
 
             {/* Items List */}
             <div className="space-y-4">
               {items.map((item, index) => {
-                const itemKey = item.itemKey || `${item.food._id}-${index}`;
+                const itemKey = getItemKey(item, index);
+                const isSelected = selectedKeys.includes(itemKey);
                 const itemUnitPrice = item.food.finalPrice || item.food.price;
                 const itemTotal = itemUnitPrice * item.quantity;
                 const hasToppings = item.food.selectedToppings && item.food.selectedToppings.length > 0;
@@ -94,18 +170,34 @@ const Cart = () => {
                 return (
                   <div
                     key={itemKey}
-                    className="flex flex-col sm:flex-row gap-4 p-4 border rounded-xl hover:bg-gray-50/70 transition-colors"
+                    className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-2xl transition-all ${
+                      isSelected
+                        ? 'bg-white border-orange-200 shadow-xs ring-1 ring-orange-100/70'
+                        : 'bg-gray-50/70 border-gray-200 opacity-75 hover:opacity-100'
+                    }`}
                   >
+                    {/* Checkbox chọn món hình vuông */}
+                    <div className="flex items-center self-start sm:self-center pt-1 sm:pt-0">
+                      <label className="relative flex items-center justify-center cursor-pointer p-0.5">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleItem(itemKey)}
+                          className="w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500 cursor-pointer accent-orange-600"
+                        />
+                      </label>
+                    </div>
+
                     {/* Image */}
                     <Link to={`/food/${item.food._id}`} className="flex-shrink-0">
                       {item.food.image ? (
                         <img
                           src={item.food.image}
                           alt={item.food.name}
-                          className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                          className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl border border-gray-200"
                         />
                       ) : (
-                        <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded-xl flex items-center justify-center">
                           <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
@@ -117,7 +209,7 @@ const Cart = () => {
                     <div className="flex-1 min-w-0">
                       <Link
                         to={`/food/${item.food._id}`}
-                        className="font-semibold text-lg hover:text-primary-600 transition-colors block mb-1"
+                        className="font-bold text-base sm:text-lg hover:text-orange-600 transition-colors block mb-1"
                       >
                         {item.food.name}
                       </Link>
@@ -172,7 +264,7 @@ const Cart = () => {
                     </div>
 
                     {/* Quantity Controls & Subtotal */}
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 border-t sm:border-t-0 pt-3 sm:pt-0">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 w-full sm:w-auto">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleDecrement(itemKey)}
@@ -225,7 +317,7 @@ const Cart = () => {
           {/* Continue Shopping */}
           <Link
             to="/menu"
-            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mt-4"
+            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mt-4 font-medium"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -240,13 +332,19 @@ const Cart = () => {
             <h3 className="text-xl font-bold mb-4">Tóm Tắt Đơn Hàng</h3>
 
             <div className="space-y-3 mb-4 pb-4 border-b">
-              <div className="flex justify-between text-gray-600">
-                <span>Tạm tính ({items.length} món)</span>
-                <span>{subtotal.toLocaleString()}đ</span>
+              <div className="flex justify-between text-gray-600 text-sm">
+                <span>Món đã chọn</span>
+                <span className="font-bold text-gray-900">
+                  {selectedItems.length} / {items.length} món
+                </span>
               </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Phí vận chuyển</span>
-                <span>{shippingFee.toLocaleString()}đ</span>
+              <div className="flex justify-between text-gray-600 text-sm">
+                <span>Tạm tính</span>
+                <span className="font-semibold text-gray-900">{subtotal.toLocaleString()}đ</span>
+              </div>
+              <div className="flex justify-between text-gray-600 text-sm">
+                <span>Phí vận chuyển dự kiến</span>
+                <span>{shippingFee > 0 ? `${shippingFee.toLocaleString()}đ` : '0đ'}</span>
               </div>
             </div>
 
@@ -255,11 +353,19 @@ const Cart = () => {
               <span className="text-primary-600">{total.toLocaleString()}đ</span>
             </div>
 
-            <button onClick={handleCheckout} className="w-full btn-primary">
-              Tiến Hành Thanh Toán
+            <button
+              onClick={handleCheckout}
+              disabled={selectedItems.length === 0}
+              className={`w-full btn-primary ${
+                selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : ''
+              }`}
+            >
+              {selectedItems.length > 0
+                ? `Tiến Hành Thanh Toán (${selectedItems.length} món)`
+                : 'Vui lòng chọn món để thanh toán'}
             </button>
 
-            {!isAuthenticated && (
+            {!isAuthenticated && selectedItems.length > 0 && (
               <p className="text-sm text-gray-600 text-center mt-4">
                 Vui lòng đăng nhập để thanh toán
               </p>

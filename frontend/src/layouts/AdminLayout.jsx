@@ -30,8 +30,11 @@ const AdminLayout = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <Link to="/" className="text-2xl font-bold text-primary-600 ml-4">
-              MSon Food Admin
+            <Link to="/" className="text-2xl font-bold ml-4 flex items-center gap-2 group">
+              <img src="/logo-icon.png" alt="MSon Food" className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105" />
+              <span>
+                <span className="text-orange-600 font-extrabold">MSon</span> <span className="text-red-700 font-extrabold">Food</span> <span className="text-xs uppercase px-2 py-0.5 ml-1.5 rounded-md bg-orange-100 text-orange-700 font-semibold align-middle">Admin</span>
+              </span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">

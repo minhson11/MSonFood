@@ -11,14 +11,19 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { items, getTotal, clearCart } = useCartStore();
+  const { items, clearCart, removeItem } = useCartStore();
 
   // Buy Now item (if navigated from "Mua ngay" on Food Detail page or Modal)
   const buyNowItem = location.state?.buyNowItem;
   const isBuyNow = !!buyNowItem;
 
-  // If Buy Now: only use that specific item; otherwise use cartStore items
-  const checkoutItems = isBuyNow ? [buyNowItem] : items;
+  // Selected items from Cart (if user selected specific items in Cart)
+  const selectedCartItems = location.state?.selectedItems;
+
+  // If Buy Now: only use that specific item; otherwise use selected items or cart items
+  const checkoutItems = isBuyNow
+    ? [buyNowItem]
+    : (selectedCartItems && selectedCartItems.length > 0 ? selectedCartItems : items);
 
   const [formData, setFormData] = useState({
     fullName: user?.name || '',
@@ -72,9 +77,10 @@ const Checkout = () => {
 
   // Calculate subtotal and quantities
   const totalItemCount = checkoutItems.reduce((acc, i) => acc + i.quantity, 0);
-  const subtotal = isBuyNow
-    ? ((buyNowItem.food.finalPrice || buyNowItem.food.price) * buyNowItem.quantity)
-    : getTotal();
+  const subtotal = checkoutItems.reduce(
+    (acc, i) => acc + (i.food.finalPrice || i.food.price || 0) * i.quantity,
+    0
+  );
 
   // Chi nhánh cửa hàng: MSon Food - Chi nhánh Hà Nội (Hồ Hoàn Kiếm)
   const STORE_LOCATION = {
@@ -348,7 +354,13 @@ const Checkout = () => {
 
       // Only clear cart if this was a regular cart checkout (not Buy Now)
       if (!isBuyNow) {
-        clearCart();
+        if (selectedCartItems && selectedCartItems.length > 0) {
+          selectedCartItems.forEach((item) => {
+            removeItem(item.itemKey || item.food._id || item.food.id);
+          });
+        } else {
+          clearCart();
+        }
       }
 
       // Redirect to Order Success page
@@ -881,10 +893,10 @@ const Checkout = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#a83210] hover:bg-[#912b0e] active:scale-98 text-white font-black text-xs sm:text-sm uppercase tracking-wider py-4 rounded-2xl shadow-lg shadow-orange-950/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-[54px] bg-[#a83210] hover:bg-[#912b0e] text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-950/20 transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
                     {loading ? (
-                      <Loading size="sm" />
+                      <Loading size="sm" color="white" text="Đang xử lý đơn hàng..." />
                     ) : (
                       <>
                         <span>ĐẶT HÀNG NGAY</span>

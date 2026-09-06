@@ -74,7 +74,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['COD', 'VNPAY', 'MOMO'],
+    enum: ['COD', 'ONLINE', 'VNPAY', 'MOMO', 'CARD'],
     default: 'COD'
   },
   subtotal: {

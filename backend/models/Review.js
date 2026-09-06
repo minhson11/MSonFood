@@ -21,6 +21,10 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  isHidden: {
+    type: Boolean,
+    default: false
+  },
   order: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order',
