@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useBlocker, Link } from 'react-router-dom';
 import useCartStore from '../store/cartStore';
 import useAuth from '../hooks/useAuth';
 import orderApi from '../services/orderApi';
+import couponApi from '../services/couponApi';
 import Loading from '../components/Loading';
 import MapPreview from '../components/MapPreview';
 import { getRealLocation, searchAddressSuggestions, geocodeAddress } from '../utils/geolocation';
@@ -265,7 +266,7 @@ const Checkout = () => {
     }
   };
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     setCouponError('');
     const code = formData.couponCode.trim().toUpperCase();
     if (!code) {
@@ -273,18 +274,37 @@ const Checkout = () => {
       return;
     }
 
-    // Demo coupon codes
-    if (code === 'MSON20' || code === 'GIAM20') {
-      setCouponApplied({ code, discount: 20000, name: 'Giảm 20.000đ cho đơn đầu' });
-      setCouponError('');
-    } else if (code === 'FREESHIP') {
-      setCouponApplied({ code, discount: shippingFee, name: 'Miễn phí giao hàng' });
-      setCouponError('');
-    } else if (code === 'MSON50') {
-      setCouponApplied({ code, discount: 50000, name: 'Giảm 50.000đ cho đơn lớn' });
-      setCouponError('');
-    } else {
-      setCouponError('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
+    try {
+      const res = await couponApi.applyCoupon(code, subtotal);
+      if (res && res.success && res.data) {
+        const { coupon, discount } = res.data;
+        const discountName = coupon.discountType === 'percent'
+          ? `Giảm ${coupon.discountValue}% (tối đa ${discount.toLocaleString()}đ)`
+          : `Giảm ${discount.toLocaleString()}đ`;
+        setCouponApplied({
+          code: coupon.code,
+          discount: discount,
+          name: discountName,
+        });
+        setCouponError('');
+      } else {
+        setCouponError(res?.message || 'Mã giảm giá không hợp lệ');
+      }
+    } catch (err) {
+      // Fallback to demo codes if matches
+      if (code === 'MSON20' || code === 'GIAM20') {
+        setCouponApplied({ code, discount: 20000, name: 'Giảm 20.000đ cho đơn đầu' });
+        setCouponError('');
+      } else if (code === 'FREESHIP') {
+        setCouponApplied({ code, discount: shippingFee, name: 'Miễn phí giao hàng' });
+        setCouponError('');
+      } else if (code === 'MSON50') {
+        setCouponApplied({ code, discount: 50000, name: 'Giảm 50.000đ cho đơn lớn' });
+        setCouponError('');
+      } else {
+        const msg = err?.response?.data?.message || err?.message || 'Mã giảm giá không hợp lệ hoặc đã hết hạn.';
+        setCouponError(msg);
+      }
     }
   };
 
