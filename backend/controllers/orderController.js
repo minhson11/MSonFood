@@ -302,10 +302,10 @@ exports.createOrder = async (req, res, next) => {
       status: 'pending'
     });
 
-    // 11. Deduct stock from foods
+    // 11. Deduct stock from foods and increment soldCount
     for (const item of processedItems) {
       await Food.findByIdAndUpdate(item.food, {
-        $inc: { stock: -item.quantity }
+        $inc: { stock: -item.quantity, soldCount: item.quantity }
       });
     }
 
@@ -424,6 +424,15 @@ exports.cancelOrder = async (req, res, next) => {
       });
     }
 
+    // Restore stock and decrement soldCount
+    for (const item of order.items) {
+      if (item.food) {
+        await Food.findByIdAndUpdate(item.food, {
+          $inc: { stock: item.quantity, soldCount: -item.quantity }
+        });
+      }
+    }
+
     // Update order status
     order.status = 'cancelled';
     await order.save();
@@ -537,7 +546,7 @@ exports.updateOrderStatus = async (req, res, next) => {
     if (status === 'cancelled' && order.status !== 'cancelled') {
       for (const item of order.items) {
         await Food.findByIdAndUpdate(item.food, {
-          $inc: { stock: item.quantity }
+          $inc: { stock: item.quantity, soldCount: -item.quantity }
         });
       }
 

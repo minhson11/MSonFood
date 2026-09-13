@@ -6,6 +6,7 @@ const adminMiddleware = require('../middleware/adminMiddleware');
 
 // Public routes
 router.get('/', foodController.getFoods);
+router.get('/featured', foodController.getFeaturedFoods);
 router.get('/:id', foodController.getFood);
 
 // Admin routes (require auth + admin)

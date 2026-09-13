@@ -15,7 +15,7 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, totalPages: 1 });
-  
+
   // Custom toast for voucher & actions
   const [toast, setToast] = useState({ show: false, message: '' });
   const showToast = (message) => {
@@ -101,79 +101,88 @@ const Menu = () => {
     setCurrentPromoSlide((prev) => (prev + 1) % PROMO_SLIDES.length);
   };
 
-  // Hardcoded 8 Static Categories with Icons and Counts (matching reference design)
-  // Mapping to backend category names if they match
-  const staticCategories = [
-    { id: 'burger', name: 'Burger', icon: '🍔', count: '24 món', matchName: 'Burger' },
-    { id: 'chicken', name: 'Gà rán', icon: '🍗', count: '18 món', matchName: 'Chicken' },
-    { id: 'pizza', name: 'Pizza', icon: '🍕', count: '15 món', matchName: 'Pizza' },
-    { id: 'pasta', name: 'Mì Ý', icon: '🍝', count: '12 món', matchName: 'Mì Ý' },
-    { id: 'rice', name: 'Cơm', icon: '🍚', count: '16 món', matchName: 'Cơm' },
-    { id: 'fries', name: 'Ăn vặt', icon: '🍟', count: '20 món', matchName: 'French Fries' },
-    { id: 'drinks', name: 'Đồ uống', icon: '🧋', count: '14 món', matchName: 'Drinks' },
-    { id: 'combo', name: 'Combo', icon: '🎁', count: '9 món', matchName: 'Combo' },
-  ];
+  // Helper: Category Icon & Label resolvers based on real project categories
+  const getCategoryIcon = (catName = '') => {
+    const name = catName.toLowerCase();
+    if (name.includes('burger')) return '🍔';
+    if (name.includes('gà') || name.includes('chicken')) return '🍗';
+    if (name.includes('pizza')) return '🍕';
+    if (name.includes('khoai') || name.includes('fries') || name.includes('ăn vặt')) return '🍟';
+    if (name.includes('nước') || name.includes('đồ uống') || name.includes('drink') || name.includes('beverage')) return '🧋';
+    if (name.includes('combo')) return '🎁';
+    if (name.includes('mì') || name.includes('pasta') || name.includes('spaghetti')) return '🍝';
+    if (name.includes('cơm') || name.includes('rice')) return '🍚';
+    if (name.includes('lẩu') || name.includes('soup') || name.includes('canh')) return '🍲';
+    if (name.includes('bánh') || name.includes('cake') || name.includes('kem') || name.includes('dessert')) return '🍰';
+    return '🍽️';
+  };
 
-  // 3 Featured Dishes matching reference design
-  const featuredDishes = [
-    {
-      _id: 'feat-1',
-      name: 'Burger Bò Phô Mai Đặc Biệt',
-      description: 'Thịt bò Úc nướng than hồng, 2 lớp phô mai cheddar béo ngậy kèm sốt BBQ bí truyền.',
-      price: 59000,
-      originalPrice: 79000,
-      rating: 4.9,
-      reviewCount: '1.2k',
-      badge: '🔥 Bán chạy nhất',
-      tag: '• Tặng kèm nước',
-      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop',
-      isAvailable: true,
-      category: { name: 'Burger' },
-    },
-    {
-      _id: 'feat-2',
-      name: 'Combo Gà Rán Giòn & Mì Ý',
-      description: '1 Miếng Gà Rán Giòn + 1 Mì Ý Sốt Bò Bằm + 1 Ly Coca mát lạnh sảng khoái.',
-      price: 85000,
-      originalPrice: 110000,
-      rating: 4.9,
-      reviewCount: '980',
-      badge: '⭐ TOP COMBO',
-      badgeColor: 'bg-amber-500',
-      tag: '• Tiết kiệm 25k',
-      image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=800&auto=format&fit=crop',
-      isAvailable: true,
-      category: { name: 'Combo' },
-    },
-    {
-      _id: 'feat-3',
-      name: 'Pizza Pepperoni Phô Mai Dẻo',
-      description: 'Lớp xúc xích Ý cay nồng phủ ngập phô mai Mozzarella kéo sợi thơm béo vô tận.',
-      price: 149000,
-      originalPrice: 189000,
-      rating: 4.8,
-      reviewCount: '850',
-      badge: '✨ MỚI RA MẮT',
-      badgeColor: 'bg-emerald-600',
-      tag: '• Đã bán 114 suất',
-      image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=800&auto=format&fit=crop',
-      isAvailable: true,
-      category: { name: 'Pizza' },
-    },
-  ];
+  const getCategoryLabel = (name = '') => {
+    const lower = name.toLowerCase().trim();
+    if (lower === 'chicken') return 'Gà rán';
+    if (lower === 'french fries') return 'Khoai tây';
+    if (lower === 'drinks') return 'Đồ uống';
+    return name;
+  };
 
-  // Favorite states for featured dishes
+  // Dynamic Featured Dishes from backend (highest purchase counts)
+  const [featuredDishes, setFeaturedDishes] = useState([]);
   const [featuredFavs, setFeaturedFavs] = useState({});
   const toggleFeaturedFav = (id) => {
     setFeaturedFavs((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Fetch categories from backend
+  const handleQuickAddFeatured = (dish, e) => {
+    if (!dish.isAvailable) return;
+    if ((dish.variants && dish.variants.length > 0) || (dish.sizes && dish.sizes.length > 0)) {
+      setModalFood(dish);
+      setModalMode('cart');
+      setIsModalOpen(true);
+    } else {
+      addToCartWithAnimation(dish, 1, e.currentTarget);
+    }
+  };
+
+  // Fetch featured dishes from backend (most purchased)
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const res = await foodApi.getFeaturedFoods({ limit: 3 });
+        setFeaturedDishes(res.data || []);
+      } catch (err) {
+        console.error('Failed to fetch featured foods in Menu:', err);
+      }
+    };
+    fetchFeatured();
+  }, []);
+
+  // Fetch categories from backend with accurate real food counts
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await categoryApi.getAllCategories();
-        setCategories(response.data || []);
+        const [catRes, foodsRes] = await Promise.all([
+          categoryApi.getAllCategories(),
+          foodApi.getAllFoods({ limit: 999 }).catch(() => null)
+        ]);
+
+        const catList = catRes?.data || (Array.isArray(catRes) ? catRes : []);
+        const allFoods = foodsRes?.data || (Array.isArray(foodsRes) ? foodsRes : []);
+
+        // Compute real food counts per category
+        const countMap = {};
+        allFoods.forEach((f) => {
+          const catId = f.category?._id || f.category;
+          if (catId) {
+            countMap[catId.toString()] = (countMap[catId.toString()] || 0) + 1;
+          }
+        });
+
+        const enriched = catList.map((c) => ({
+          ...c,
+          foodCount: c.foodCount !== undefined ? c.foodCount : (countMap[c._id.toString()] || 0)
+        }));
+
+        setCategories(enriched);
       } catch (err) {
         console.error('Failed to fetch categories:', err);
       }
@@ -193,7 +202,7 @@ const Menu = () => {
         };
 
         if (search) params.search = search;
-        
+
         // Find matching backend category id if category filter is active
         if (category) {
           // If category matches a backend category ID directly or matched by name
@@ -244,27 +253,18 @@ const Menu = () => {
   };
 
   // Handle category card click
-  const handleCategoryClick = (cat) => {
-    // Find backend category that matches
-    const matched = categories.find(
-      (c) => c.name.toLowerCase() === cat.matchName.toLowerCase()
-    );
-    const targetValue = matched ? matched._id : cat.id;
-
-    if (category === targetValue || category === cat.id) {
+  const handleCategoryClick = (catId) => {
+    if (category === catId) {
       updateParams({ category: '' });
     } else {
-      updateParams({ category: targetValue });
+      updateParams({ category: catId });
     }
   };
 
-  // Check if a static category is active
+  // Check if a category is active
   const isCategoryActive = (cat) => {
-    if (!category) return false;
-    const matched = categories.find(
-      (c) => c.name.toLowerCase() === cat.matchName.toLowerCase()
-    );
-    return category === cat.id || (matched && category === matched._id);
+    if (!category || !cat) return false;
+    return category === cat._id || (cat.name && category.toLowerCase() === cat.name.toLowerCase());
   };
 
   // Handle search submission
@@ -324,13 +324,13 @@ const Menu = () => {
       )}
 
       <div className="container-custom pt-6 space-y-8">
-        
+
         {/* ========================================================================= */}
         {/* SECTION 1: HERO "KHÁM PHÁ THỰC ĐƠN"                                      */}
         {/* ========================================================================= */}
         <section className="bg-white rounded-3xl p-6 sm:p-10 border border-gray-100 shadow-xs relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-            
+
             {/* Left Content */}
             <div className="lg:col-span-7 space-y-5">
               {/* Badge */}
@@ -376,7 +376,7 @@ const Menu = () => {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-orange-600 text-xs">⚡</span>
-                  <span>Giao Thần Tốc 30 Phút</span>
+                  <span>Giao Hoả Tốc 30 Phút</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-emerald-600 text-xs">🛡️</span>
@@ -525,11 +525,10 @@ const Menu = () => {
                 key={idx}
                 type="button"
                 onClick={() => setCurrentPromoSlide(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  idx === currentPromoSlide
-                    ? 'w-6 bg-white shadow-xs'
-                    : 'w-1.5 bg-white/40 hover:bg-white/70'
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${idx === currentPromoSlide
+                  ? 'w-6 bg-white shadow-xs'
+                  : 'w-1.5 bg-white/40 hover:bg-white/70'
+                  }`}
                 title={`Chuyển đến slide ${idx + 1}`}
               />
             ))}
@@ -537,7 +536,7 @@ const Menu = () => {
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 3: "DANH MỤC MÓN ĂN"                                              */}
+        {/* SECTION 3: CATEGORIES SELECTOR                                            */}
         {/* ========================================================================= */}
         <section id="categories">
           {/* Header */}
@@ -550,471 +549,505 @@ const Menu = () => {
                 Chọn danh mục để xem nhanh các món theo sở thích
               </p>
             </div>
-            <span className="text-xs font-semibold text-gray-400">
-              8 Danh mục
-            </span>
+            <div className="flex items-center gap-2">
+              {category && (
+                <button
+                  type="button"
+                  onClick={() => updateParams({ category: '' })}
+                  className="text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline bg-orange-50 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                >
+                  ✕ Bỏ lọc
+                </button>
+              )}
+              <span className="text-xs font-semibold text-gray-400">
+                {categories.length} Danh mục
+              </span>
+            </div>
           </div>
 
           {/* Category Cards Horizontal Grid */}
-          <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2.5 sm:gap-3">
-            {staticCategories.map((cat) => {
-              const active = isCategoryActive(cat);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategoryClick(cat)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-200 group text-center ${
-                    active
-                      ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30 scale-102 border-transparent'
-                      : 'bg-white hover:bg-orange-50/50 text-gray-800 border border-gray-200/80 shadow-2xs hover:border-orange-200'
-                  }`}
-                >
-                  <span className="text-2xl mb-1 transition-transform duration-200 group-hover:scale-110">
-                    {cat.icon}
-                  </span>
-                  <span className="text-xs font-bold leading-tight line-clamp-1 mb-1">
-                    {cat.name}
-                  </span>
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      active
-                        ? 'bg-white/25 text-white'
-                        : 'bg-gray-100 text-gray-400 group-hover:text-orange-600 group-hover:bg-orange-100/50'
-                    }`}
-                  >
-                    {cat.count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* SECTION 4: SEARCH & FILTER TOOLBAR                                       */}
-        {/* ========================================================================= */}
-        <section className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-200/80 shadow-xs space-y-3">
-          {/* Row 1: Search input and dropdowns */}
-          <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
-            {/* Search Input */}
-            <div className="md:col-span-6 relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                🔍
-              </span>
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Bạn đang thèm món gì? (vd: burger bò, gà giòn, khoai tây...)"
-                className="w-full pl-9 pr-8 py-2.5 bg-gray-50 hover:bg-gray-100/80 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-              />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchInput('');
-                    updateParams({ search: '' });
-                  }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs w-4 h-4 rounded-full flex items-center justify-center"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {/* Dropdown 1: Price Range */}
-            <div className="md:col-span-2">
-              <select
-                value={priceFilter}
-                onChange={(e) => updateParams({ price: e.target.value })}
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-              >
-                <option value="all">Khoảng giá (Tất cả)</option>
-                <option value="under_50">Dưới 50.000đ</option>
-                <option value="50_100">50.000đ - 100.000đ</option>
-                <option value="above_100">Trên 100.000đ</option>
-              </select>
-            </div>
-
-            {/* Dropdown 2: Status */}
-            <div className="md:col-span-2">
-              <select
-                value={statusFilter}
-                onChange={(e) => updateParams({ status: e.target.value })}
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-              >
-                <option value="all">Trạng thái (Tất cả)</option>
-                <option value="bestseller">Bán chạy</option>
-                <option value="discount">Giảm giá sốc</option>
-                <option value="new">Mới ra mắt</option>
-              </select>
-            </div>
-
-            {/* Dropdown 3: Sort */}
-            <div className="md:col-span-2">
-              <select
-                value={sort}
-                onChange={(e) => updateParams({ sort: e.target.value })}
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-              >
-                <option value="popular">Sắp xếp: Phổ biến nhất</option>
-                <option value="price_asc">Giá: Thấp đến Cao</option>
-                <option value="price_desc">Giá: Cao đến Thấp</option>
-                <option value="rating_desc">Đánh giá: Cao nhất</option>
-              </select>
-            </div>
-          </form>
-
-          {/* Row 2: Quick suggestion tag chips & Results count */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-gray-400 font-medium">Gợi ý nhanh:</span>
-              {[
-                { label: '🔥 Gà rán', query: 'Gà' },
-                { label: '🍔 Burger bò', query: 'Burger' },
-                { label: '🍕 Pizza', query: 'Pizza' },
-                { label: '🧋 Trà sữa', query: 'Trà' },
-                { label: '🍟 Khoai tây', query: 'Khoai' },
-              ].map((chip, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setSearchInput(chip.query);
-                    updateParams({ search: chip.query });
-                  }}
-                  className="bg-gray-100 hover:bg-orange-50 hover:text-orange-600 text-gray-600 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Results count & Clear button */}
-            <div className="flex items-center gap-3 text-[11px]">
-              <span className="text-gray-500 font-semibold">
-                {filteredFoods.length} món ăn được tìm thấy
-              </span>
-              {(search || category || priceFilter !== 'all' || statusFilter !== 'all' || sort !== 'popular') && (
-                <button
-                  onClick={handleClearFilters}
-                  className="text-orange-600 hover:text-orange-700 font-bold underline"
-                >
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* SECTION 5: "MÓN NỔI BẬT HÔM NAY" (FEATURED DISHES)                        */}
-        {/* ========================================================================= */}
-        <section id="featured-dishes">
-          {/* Section Header with Navigation Arrows */}
-          <div className="flex items-end justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🌟</span>
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-                  Món Nổi Bật Hôm Nay
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm text-gray-500 font-normal">
-                Top món ăn ngon được gọi nhiều nhất trong 24 giờ qua
-              </p>
-            </div>
-
-            {/* Arrow navigation buttons */}
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  if (featuredScrollRef.current) {
-                    featuredScrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
-                  }
-                }}
-                className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center text-xs font-bold transition-colors shadow-2xs"
-                title="Trước"
-              >
-                ❮
-              </button>
-              <button
-                onClick={() => {
-                  if (featuredScrollRef.current) {
-                    featuredScrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
-                  }
-                }}
-                className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center text-xs font-bold transition-colors shadow-2xs"
-                title="Sau"
-              >
-                ❯
-              </button>
-            </div>
-          </div>
-
-          {/* 3 Featured Cards Grid */}
-          <div
-            ref={featuredScrollRef}
-            className="grid grid-cols-1 md:grid-cols-3 gap-5"
-          >
-            {featuredDishes.map((dish) => {
-              const isFav = featuredFavs[dish._id];
-              return (
-                <div
-                  key={dish._id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-1"
-                >
-                  {/* Image container */}
-                  <div className="relative aspect-[16/10] bg-gray-100 overflow-hidden">
-                    <img
-                      src={dish.image}
-                      alt={dish.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-
-                    {/* Top Left Badge */}
-                    <span
-                      className={`absolute top-3 left-3 ${
-                        dish.badgeColor || 'bg-red-600'
-                      } text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xs flex items-center gap-1`}
-                    >
-                      {dish.badge}
-                    </span>
-
-                    {/* Favorite Button Top Right */}
-                    <button
-                      type="button"
-                      onClick={() => toggleFeaturedFav(dish._id)}
-                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow-xs backdrop-blur-xs transition-all"
-                      title={isFav ? 'Đã yêu thích' : 'Yêu thích món này'}
-                    >
-                      {isFav ? (
-                        <span className="text-red-500 text-sm">❤️</span>
-                      ) : (
-                        <svg className="w-4 h-4 text-gray-600 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Body */}
-                  <div className="p-4 flex flex-col flex-1 justify-between">
-                    <div>
-                      {/* Rating & Special Tag */}
-                      <div className="flex items-center justify-between text-xs mb-2">
-                        <div className="flex items-center gap-1 text-amber-500 font-bold">
-                          <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
-                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                          </svg>
-                          <span className="text-gray-900 font-bold">{dish.rating}</span>
-                          <span className="text-gray-400 font-normal">({dish.reviewCount})</span>
-                        </div>
-                        <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold text-[11px]">
-                          {dish.tag}
-                        </span>
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="font-extrabold text-base text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1 mb-1.5">
-                        {dish.name}
-                      </h3>
-
-                      {/* Description */}
-                      <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-4">
-                        {dish.description}
-                      </p>
-                    </div>
-
-                    {/* Price & Action Buttons */}
-                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2 mt-auto">
-                      <div className="flex flex-col">
-                        <span className="text-xs text-gray-400 line-through leading-none mb-0.5">
-                          {dish.originalPrice.toLocaleString()}đ
-                        </span>
-                        <span className="text-lg font-black text-red-700 tracking-tight leading-none">
-                          {dish.price.toLocaleString()}đ
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        {/* Quick Add Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            addToCartWithAnimation(dish, 1, e.currentTarget);
-                          }}
-                          className="w-8 h-8 rounded-full border border-orange-200 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white flex items-center justify-center font-bold text-base transition-all duration-150 shadow-2xs active:scale-95"
-                          title="Thêm nhanh vào giỏ"
-                        >
-                          +
-                        </button>
-
-                        {/* Mua ngay button */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setModalFood(dish);
-                            setModalMode('buynow');
-                            setIsModalOpen(true);
-                          }}
-                          className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white text-xs font-bold px-4 py-2 rounded-full shadow-xs hover:shadow-sm active:scale-95 transition-all duration-150 whitespace-nowrap"
-                        >
-                          Mua ngay
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* SECTION 6: "TẤT CẢ MÓN NGON" (4-COLUMNS FOOD GRID)                       */}
-        {/* ========================================================================= */}
-        <section id="all-foods">
-          {/* Header */}
-          <div className="mb-4">
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-              Tất Cả Món Ngon
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-500 font-normal">
-              Chọn món ăn nóng hổi được giao tận tay bạn sau 15 phút
-            </p>
-          </div>
-
-          {/* Foods Grid */}
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <Loading />
-            </div>
-          ) : error ? (
-            <ErrorMessage message={error} />
-          ) : filteredFoods.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-gray-200/80 p-8 shadow-xs">
-              <div className="text-5xl mb-3">🍽️</div>
-              <h3 className="text-lg font-bold text-gray-800 mb-1">Không tìm thấy món ăn phù hợp</h3>
-              <p className="text-gray-500 text-xs mb-4">
-                Vui lòng thử điều chỉnh lại từ khóa hoặc xóa bớt bộ lọc
-              </p>
-              <button
-                onClick={handleClearFilters}
-                className="btn-primary text-xs py-2 px-4 rounded-full font-bold"
-              >
-                Xóa tất cả bộ lọc
-              </button>
+          {categories.length === 0 ? (
+            <div className="p-8 bg-white rounded-2xl border border-gray-100 text-center text-gray-400 text-sm">
+              Đang tải danh mục...
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {filteredFoods.map((food, idx) => (
-                <FoodCard
-                  key={food._id}
-                  food={food}
-                  badgeType={
-                    idx === 0
-                      ? 'bestseller'
-                      : idx === 1
-                      ? 'bestseller'
-                      : idx === 2
-                      ? '-20%'
-                      : idx === 3
-                      ? 'new'
-                      : idx % 4 === 0
-                      ? 'bestseller'
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-3">
+              {categories.map((cat) => {
+                const active = isCategoryActive(cat);
+                const icon = getCategoryIcon(cat.name);
+                const label = getCategoryLabel(cat.name);
+                const count = cat.foodCount !== undefined ? cat.foodCount : 0;
 
-          {/* ========================================================================= */}
-          {/* SECTION 7: PAGINATION & LOAD MORE BAR                                    */}
-          {/* ========================================================================= */}
-          {!loading && filteredFoods.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200/80 text-xs text-gray-600">
-              {/* Left count */}
-              <div>
-                Hiển thị <span className="font-bold text-gray-900">{filteredFoods.length}</span> / {pagination.total || filteredFoods.length} món ăn
-              </div>
-
-              {/* Center Pagination Buttons */}
-              <div className="flex items-center gap-1.5">
-                {/* Prev */}
-                <button
-                  onClick={() => updateParams({ page: page - 1 })}
-                  disabled={page <= 1}
-                  className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white text-gray-700 flex items-center justify-center font-bold transition-all shadow-2xs"
-                  title="Trang trước"
-                >
-                  ❮
-                </button>
-
-                {/* Page numbers */}
-                {[...Array(Math.min(pagination.totalPages || 3, 5))].map((_, index) => {
-                  const pNum = index + 1;
-                  const isCur = page === pNum;
-                  return (
-                    <button
-                      key={pNum}
-                      onClick={() => updateParams({ page: pNum })}
-                      className={`w-8 h-8 rounded-full text-xs font-bold transition-all shadow-2xs ${
-                        isCur
-                          ? 'bg-[#991b1b] text-white'
-                          : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
+                return (
+                  <button
+                    key={cat._id}
+                    type="button"
+                    onClick={() => handleCategoryClick(cat._id)}
+                    className={`flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl transition-all duration-200 group text-center cursor-pointer ${
+                      active
+                        ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30 scale-102 border-transparent'
+                        : 'bg-white hover:bg-orange-50/50 text-gray-800 border border-gray-200/80 shadow-2xs hover:border-orange-200'
+                    }`}
+                    title={`${cat.name} (${count} món)`}
+                  >
+                    <span className="text-2xl sm:text-3xl mb-1.5 transition-transform duration-200 group-hover:scale-110">
+                      {icon}
+                    </span>
+                    <span
+                      className={`text-xs font-bold leading-tight line-clamp-1 mb-1 ${
+                        active ? 'text-white' : 'text-gray-900 group-hover:text-orange-600'
                       }`}
                     >
-                      {pNum}
-                    </button>
-                  );
-                })}
-
-                {pagination.totalPages > 5 && (
-                  <>
-                    <span className="px-1 text-gray-400">...</span>
-                    <button
-                      onClick={() => updateParams({ page: pagination.totalPages })}
-                      className={`w-8 h-8 rounded-full text-xs font-bold transition-all shadow-2xs ${
-                        page === pagination.totalPages
-                          ? 'bg-[#991b1b] text-white'
-                          : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
+                      {label}
+                    </span>
+                    <span
+                      className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-semibold transition-colors ${
+                        active
+                          ? 'bg-white/25 text-white'
+                          : 'bg-gray-100 text-gray-500 group-hover:text-orange-600 group-hover:bg-orange-100/60'
                       }`}
                     >
-                      {pagination.totalPages}
-                    </button>
-                  </>
-                )}
-
-                {/* Next */}
-                <button
-                  onClick={() => updateParams({ page: page + 1 })}
-                  disabled={page >= (pagination.totalPages || 1)}
-                  className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white text-gray-700 flex items-center justify-center font-bold transition-all shadow-2xs"
-                  title="Trang sau"
-                >
-                  ❯
-                </button>
-              </div>
-
-              {/* Right: Load more button */}
-              <div>
-                <button
-                  onClick={() => updateParams({ page: page + 1 })}
-                  disabled={page >= (pagination.totalPages || 1)}
-                  className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full font-semibold text-gray-700 shadow-2xs transition-all disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  <span>Tải thêm món</span>
-                  <span className="text-sm">⟳</span>
-                </button>
-              </div>
+                      {count} món
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>
 
+            {/* ========================================================================= */}
+            {/* SECTION 4: SEARCH & FILTER TOOLBAR                                       */}
+            {/* ========================================================================= */}
+            <section className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-200/80 shadow-xs space-y-3">
+              {/* Row 1: Search input and dropdowns */}
+              <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+                {/* Search Input */}
+                <div className="md:col-span-6 relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Bạn đang thèm món gì? (vd: burger bò, gà giòn, khoai tây...)"
+                    className="w-full pl-9 pr-8 py-2.5 bg-gray-50 hover:bg-gray-100/80 focus:bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                  />
+                  {searchInput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchInput('');
+                        updateParams({ search: '' });
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs w-4 h-4 rounded-full flex items-center justify-center"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown 1: Price Range */}
+                <div className="md:col-span-2">
+                  <select
+                    value={priceFilter}
+                    onChange={(e) => updateParams({ price: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  >
+                    <option value="all">Khoảng giá (Tất cả)</option>
+                    <option value="under_50">Dưới 50.000đ</option>
+                    <option value="50_100">50.000đ - 100.000đ</option>
+                    <option value="above_100">Trên 100.000đ</option>
+                  </select>
+                </div>
+
+                {/* Dropdown 2: Status */}
+                <div className="md:col-span-2">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => updateParams({ status: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  >
+                    <option value="all">Trạng thái (Tất cả)</option>
+                    <option value="bestseller">Bán chạy</option>
+                    <option value="discount">Giảm giá sốc</option>
+                    <option value="new">Mới ra mắt</option>
+                  </select>
+                </div>
+
+                {/* Dropdown 3: Sort */}
+                <div className="md:col-span-2">
+                  <select
+                    value={sort}
+                    onChange={(e) => updateParams({ sort: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  >
+                    <option value="popular">Sắp xếp: Phổ biến nhất</option>
+                    <option value="price_asc">Giá: Thấp đến Cao</option>
+                    <option value="price_desc">Giá: Cao đến Thấp</option>
+                    <option value="rating_desc">Đánh giá: Cao nhất</option>
+                  </select>
+                </div>
+              </form>
+
+              {/* Row 2: Quick suggestion tag chips & Results count */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-gray-400 font-medium">Gợi ý nhanh:</span>
+                  {[
+                    { label: '🔥 Gà rán', query: 'Gà' },
+                    { label: '🍔 Burger bò', query: 'Burger' },
+                    { label: '🍕 Pizza', query: 'Pizza' },
+                    { label: '🧋 Trà sữa', query: 'Trà' },
+                    { label: '🍟 Khoai tây', query: 'Khoai' },
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setSearchInput(chip.query);
+                        updateParams({ search: chip.query });
+                      }}
+                      className="bg-gray-100 hover:bg-orange-50 hover:text-orange-600 text-gray-600 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Results count & Clear button */}
+                <div className="flex items-center gap-3 text-[11px]">
+                  <span className="text-gray-500 font-semibold">
+                    {filteredFoods.length} món ăn được tìm thấy
+                  </span>
+                  {(search || category || priceFilter !== 'all' || statusFilter !== 'all' || sort !== 'popular') && (
+                    <button
+                      onClick={handleClearFilters}
+                      className="text-orange-600 hover:text-orange-700 font-bold underline"
+                    >
+                      Xóa bộ lọc
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* ========================================================================= */}
+            {/* SECTION 5: "MÓN NỔI BẬT HÔM NAY" (FEATURED DISHES)                        */}
+            {/* ========================================================================= */}
+            <section id="featured-dishes">
+              {/* Section Header with Navigation Arrows */}
+              <div className="flex items-end justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🌟</span>
+                    <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                      Món Nổi Bật Hôm Nay
+                    </h2>
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-500 font-normal">
+                    Top món ăn ngon được gọi nhiều nhất trong 24 giờ qua
+                  </p>
+                </div>
+
+                {/* Arrow navigation buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      if (featuredScrollRef.current) {
+                        featuredScrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+                      }
+                    }}
+                    className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center text-xs font-bold transition-colors shadow-2xs"
+                    title="Trước"
+                  >
+                    ❮
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (featuredScrollRef.current) {
+                        featuredScrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+                      }
+                    }}
+                    className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center text-xs font-bold transition-colors shadow-2xs"
+                    title="Sau"
+                  >
+                    ❯
+                  </button>
+                </div>
+              </div>
+
+              {/* 3 Featured Cards Grid */}
+              <div
+                ref={featuredScrollRef}
+                className="grid grid-cols-1 md:grid-cols-3 gap-5"
+              >
+                {featuredDishes && featuredDishes.length > 0 ? (
+                  featuredDishes.filter(Boolean).map((dish, idx) => {
+                    const isFav = featuredFavs[dish._id];
+                    const price = Number(dish?.price) || 0;
+                    const originalPrice = Number(dish?.originalPrice) || Math.round(price * 1.25 / 1000) * 1000;
+                    const badgeText = dish.badge || (idx === 0 ? '🔥 Bán chạy nhất' : idx === 1 ? '⭐ TOP 2 BÁN CHẠY' : '✨ TOP 3 BÁN CHẠY');
+                    const badgeColor = dish.badgeColor || (idx === 0 ? 'bg-red-600' : idx === 1 ? 'bg-amber-500' : 'bg-emerald-600');
+                    const tagText = dish.tag || `• Đã bán ${dish.soldCount || 0} suất`;
+
+                    return (
+                      <div
+                        key={dish._id}
+                        className="bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-1"
+                      >
+                        {/* Image container */}
+                        <div className="relative aspect-[16/10] bg-gray-100 overflow-hidden">
+                          <Link to={`/food/${dish._id}`} className="block w-full h-full">
+                            <img
+                              src={dish.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}
+                              alt={dish.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </Link>
+
+                          {/* Top Left Badge */}
+                          <span
+                            className={`absolute top-3 left-3 ${badgeColor} text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xs flex items-center gap-1`}
+                          >
+                            {badgeText}
+                          </span>
+
+                          {/* Favorite Button Top Right */}
+                          <button
+                            type="button"
+                            onClick={() => toggleFeaturedFav(dish._id)}
+                            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow-xs backdrop-blur-xs transition-all cursor-pointer"
+                            title={isFav ? 'Đã yêu thích' : 'Yêu thích món này'}
+                          >
+                            {isFav ? (
+                              <span className="text-red-500 text-sm">❤️</span>
+                            ) : (
+                              <svg className="w-4 h-4 text-gray-600 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-4 flex flex-col flex-1 justify-between">
+                          <div>
+                            {/* Rating & Special Tag */}
+                            <div className="flex items-center justify-between text-xs mb-2">
+                              <div className="flex items-center gap-1 text-amber-500 font-bold">
+                                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                </svg>
+                                <span className="text-gray-900 font-bold">{dish.rating > 0 ? dish.rating : 5.0}</span>
+                                <span className="text-gray-400 font-normal">({dish.reviewCount || 0})</span>
+                              </div>
+                              <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold text-[11px]">
+                                {tagText}
+                              </span>
+                            </div>
+
+                            {/* Title */}
+                            <Link
+                              to={`/food/${dish._id}`}
+                              className="block font-extrabold text-base text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1 mb-1.5"
+                            >
+                              {dish.name}
+                            </Link>
+
+                            {/* Description */}
+                            <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-4">
+                              {dish.description}
+                            </p>
+                          </div>
+
+                          {/* Price & Action Buttons */}
+                          <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2 mt-auto">
+                            <div className="flex flex-col">
+                              <span className="text-xs text-gray-400 line-through leading-none mb-0.5">
+                                {originalPrice.toLocaleString()}đ
+                              </span>
+                              <span className="text-lg font-black text-red-700 tracking-tight leading-none">
+                                {price.toLocaleString()}đ
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              {/* Quick Add Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => handleQuickAddFeatured(dish, e)}
+                                className="w-8 h-8 rounded-full border border-orange-200 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white flex items-center justify-center font-bold text-base transition-all duration-150 shadow-2xs active:scale-95"
+                                title="Thêm nhanh vào giỏ"
+                              >
+                                +
+                              </button>
+
+                              {/* Mua ngay button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModalFood(dish);
+                                  setModalMode('buynow');
+                                  setIsModalOpen(true);
+                                }}
+                                className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white text-xs font-bold px-4 py-2 rounded-full shadow-xs hover:shadow-sm active:scale-95 transition-all duration-150 whitespace-nowrap"
+                              >
+                                Mua ngay
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : null}
+              </div>
+            </section>
+
+            {/* ========================================================================= */}
+            {/* SECTION 6: "TẤT CẢ MÓN NGON" (4-COLUMNS FOOD GRID)                       */}
+            {/* ========================================================================= */}
+            <section id="all-foods">
+              {/* Header */}
+              <div className="mb-4">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                  Tất Cả Món Ngon
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500 font-normal">
+                  Chọn món ăn nóng hổi được giao tận tay bạn sau 15 phút
+                </p>
+              </div>
+
+              {/* Foods Grid */}
+              {loading ? (
+                <div className="flex justify-center py-16">
+                  <Loading />
+                </div>
+              ) : error ? (
+                <ErrorMessage message={error} />
+              ) : filteredFoods.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-3xl border border-gray-200/80 p-8 shadow-xs">
+                  <div className="text-5xl mb-3">🍽️</div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-1">Không tìm thấy món ăn phù hợp</h3>
+                  <p className="text-gray-500 text-xs mb-4">
+                    Vui lòng thử điều chỉnh lại từ khóa hoặc xóa bớt bộ lọc
+                  </p>
+                  <button
+                    onClick={handleClearFilters}
+                    className="btn-primary text-xs py-2 px-4 rounded-full font-bold"
+                  >
+                    Xóa tất cả bộ lọc
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {filteredFoods.map((food, idx) => (
+                    <FoodCard
+                      key={food._id}
+                      food={food}
+                      badgeType={
+                        idx === 0
+                          ? 'bestseller'
+                          : idx === 1
+                            ? 'bestseller'
+                            : idx === 2
+                              ? '-20%'
+                              : idx === 3
+                                ? 'new'
+                                : idx % 4 === 0
+                                  ? 'bestseller'
+                                  : undefined
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* ========================================================================= */}
+              {/* SECTION 7: PAGINATION & LOAD MORE BAR                                    */}
+              {/* ========================================================================= */}
+              {!loading && filteredFoods.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200/80 text-xs text-gray-600">
+                  {/* Left count */}
+                  <div>
+                    Hiển thị <span className="font-bold text-gray-900">{filteredFoods.length}</span> / {pagination.total || filteredFoods.length} món ăn
+                  </div>
+
+                  {/* Center Pagination Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    {/* Prev */}
+                    <button
+                      onClick={() => updateParams({ page: page - 1 })}
+                      disabled={page <= 1}
+                      className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white text-gray-700 flex items-center justify-center font-bold transition-all shadow-2xs"
+                      title="Trang trước"
+                    >
+                      ❮
+                    </button>
+
+                    {/* Page numbers */}
+                    {[...Array(Math.min(pagination.totalPages || 3, 5))].map((_, index) => {
+                      const pNum = index + 1;
+                      const isCur = page === pNum;
+                      return (
+                        <button
+                          key={pNum}
+                          onClick={() => updateParams({ page: pNum })}
+                          className={`w-8 h-8 rounded-full text-xs font-bold transition-all shadow-2xs ${isCur
+                            ? 'bg-[#991b1b] text-white'
+                            : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
+                            }`}
+                        >
+                          {pNum}
+                        </button>
+                      );
+                    })}
+
+                    {pagination.totalPages > 5 && (
+                      <>
+                        <span className="px-1 text-gray-400">...</span>
+                        <button
+                          onClick={() => updateParams({ page: pagination.totalPages })}
+                          className={`w-8 h-8 rounded-full text-xs font-bold transition-all shadow-2xs ${page === pagination.totalPages
+                            ? 'bg-[#991b1b] text-white'
+                            : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
+                            }`}
+                        >
+                          {pagination.totalPages}
+                        </button>
+                      </>
+                    )}
+
+                    {/* Next */}
+                    <button
+                      onClick={() => updateParams({ page: page + 1 })}
+                      disabled={page >= (pagination.totalPages || 1)}
+                      className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white text-gray-700 flex items-center justify-center font-bold transition-all shadow-2xs"
+                      title="Trang sau"
+                    >
+                      ❯
+                    </button>
+                  </div>
+
+                  {/* Right: Load more button */}
+                  <div>
+                    <button
+                      onClick={() => updateParams({ page: page + 1 })}
+                      disabled={page >= (pagination.totalPages || 1)}
+                      className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-full font-semibold text-gray-700 shadow-2xs transition-all disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      <span>Tải thêm món</span>
+                      <span className="text-sm">⟳</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+          </div>
       </div>
-    </div>
-  );
+      );
 };
 
-export default Menu;
+      export default Menu;

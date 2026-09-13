@@ -35,6 +35,16 @@ const foodSchema = new mongoose.Schema({
     min: 0,
     max: 5
   },
+  reviewCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  soldCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   isAvailable: {
     type: Boolean,
     default: true

@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import foodApi from '../services/foodApi';
 import categoryApi from '../services/categoryApi';
 import Loading from '../components/Loading';
 import FoodCard from '../components/FoodCard';
 import useAddToCartAnimation from '../hooks/useAddToCartAnimation';
+import ProductCustomizationModal from '../components/product/ProductCustomizationModal';
 
 const BANNER_SLIDES = [
   {
@@ -45,6 +46,29 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Modal customization & cart animation states
+  const [modalFood, setModalFood] = useState(null);
+  const [modalMode, setModalMode] = useState('cart');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [featuredFavs, setFeaturedFavs] = useState({});
+  const featuredScrollRef = useRef(null);
+  const [addToCartWithAnimation] = useAddToCartAnimation();
+
+  const toggleFeaturedFav = (id) => {
+    setFeaturedFavs((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleQuickAdd = (food, e) => {
+    if (!food.isAvailable) return;
+    if ((food.variants && food.variants.length > 0) || (food.sizes && food.sizes.length > 0)) {
+      setModalFood(food);
+      setModalMode('cart');
+      setIsModalOpen(true);
+    } else {
+      addToCartWithAnimation(food, 1, e.currentTarget);
+    }
+  };
+
   // State quản lý banner slider
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSlideHovered, setIsSlideHovered] = useState(false);
@@ -69,8 +93,8 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Lấy 4 món ăn nổi bật
-        const foodsResponse = await foodApi.getAllFoods({ limit: 4, sort: 'rating' });
+        // Lấy 4 món ăn nổi bật hôm nay có lượt mua cao nhất từ backend
+        const foodsResponse = await foodApi.getFeaturedFoods({ limit: 4 });
         setFeaturedFoods(foodsResponse.data || []);
 
         // Lấy danh mục
@@ -331,32 +355,210 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured Foods Section */}
-      <section className="py-12">
+      {/* Featured Foods Section - "Món Ăn Nổi Bật Hôm Nay" */}
+      <section id="featured-dishes" className="py-12 bg-[#fffbf7]/70 border-y border-orange-100/70">
         <div className="container-custom">
-          <div className="flex justify-between items-center mb-6">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-3">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Món ăn được yêu thích</h2>
-              <p className="text-gray-600">Lựa chọng món ăn được ưa thích nhất từ thực đơn của chúng tôi</p>
+              <div className="inline-flex items-center gap-2 bg-orange-100/80 text-orange-700 px-3 py-1 rounded-full text-xs font-bold mb-2">
+                <span>🔥</span>
+                <span>BÁN CHẠY NHẤT HÔM NAY</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl sm:text-2xl">🌟</span>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                  Món Ăn Nổi Bật Hôm Nay
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500 font-normal mt-1">
+                Top món ăn ngon có lượt mua cao nhất được hệ thống tự động cập nhật theo đơn hàng thực tế
+              </p>
             </div>
-            <Link to="/menu" className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
-              Xem tất cả
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
+
+            <div className="flex items-center gap-3">
+              {/* Arrow navigation buttons */}
+              <div className="hidden sm:flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (featuredScrollRef.current) {
+                      featuredScrollRef.current.scrollBy({ left: -340, behavior: 'smooth' });
+                    }
+                  }}
+                  className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center text-xs font-bold transition-colors shadow-2xs cursor-pointer"
+                  title="Trước"
+                >
+                  ❮
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (featuredScrollRef.current) {
+                      featuredScrollRef.current.scrollBy({ left: 340, behavior: 'smooth' });
+                    }
+                  }}
+                  className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center text-xs font-bold transition-colors shadow-2xs cursor-pointer"
+                  title="Sau"
+                >
+                  ❯
+                </button>
+              </div>
+
+              <Link
+                to="/menu"
+                className="text-orange-600 hover:text-orange-700 font-bold text-xs sm:text-sm flex items-center gap-1 bg-white hover:bg-orange-50 border border-orange-200 px-3.5 py-1.5 rounded-full transition-colors shadow-2xs"
+              >
+                <span>Xem tất cả thực đơn</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
           </div>
 
-          {/* Food Grid */}
+          {/* 4 Featured Cards Grid */}
           {featuredFoods.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredFoods.map((food) => (
-                <FoodCard key={food._id} food={food} />
-              ))}
+            <div
+              ref={featuredScrollRef}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+            >
+              {featuredFoods.filter(Boolean).map((dish, idx) => {
+                const isFav = featuredFavs[dish._id];
+                const price = Number(dish?.price) || 0;
+                const originalPrice = Number(dish?.originalPrice) || Math.round(price * 1.25 / 1000) * 1000;
+
+                // Dynamic badge config based on ranking
+                let badgeText = `🔥 Top ${idx + 1} Bán chạy`;
+                let badgeBg = 'bg-red-600';
+                if (idx === 0) {
+                  badgeText = '🔥 Top 1 Bán chạy';
+                  badgeBg = 'bg-red-600';
+                } else if (idx === 1) {
+                  badgeText = '⭐ Top 2 Bán chạy';
+                  badgeBg = 'bg-amber-500';
+                } else if (idx === 2) {
+                  badgeText = '✨ Top 3 Bán chạy';
+                  badgeBg = 'bg-emerald-600';
+                } else {
+                  badgeText = `⚡ Top ${idx + 1} Bán chạy`;
+                  badgeBg = 'bg-orange-600';
+                }
+
+                return (
+                  <div
+                    key={dish._id}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group hover:-translate-y-1"
+                  >
+                    {/* Image container */}
+                    <div className="relative aspect-[16/10] bg-gray-100 overflow-hidden">
+                      <Link to={`/food/${dish._id}`} className="block w-full h-full">
+                        <img
+                          src={dish.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'}
+                          alt={dish.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </Link>
+
+                      {/* Top Left Badge */}
+                      <span
+                        className={`absolute top-3 left-3 ${badgeBg} text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xs flex items-center gap-1`}
+                      >
+                        {badgeText}
+                      </span>
+
+                      {/* Favorite Button Top Right */}
+                      <button
+                        type="button"
+                        onClick={() => toggleFeaturedFav(dish._id)}
+                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-gray-700 flex items-center justify-center shadow-xs backdrop-blur-xs transition-all cursor-pointer"
+                        title={isFav ? 'Đã yêu thích' : 'Yêu thích món này'}
+                      >
+                        {isFav ? (
+                          <span className="text-red-500 text-sm">❤️</span>
+                        ) : (
+                          <svg className="w-4 h-4 text-gray-600 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-4 flex flex-col flex-1 justify-between">
+                      <div>
+                        {/* Rating & Sold Tag */}
+                        <div className="flex items-center justify-between text-xs mb-2">
+                          <div className="flex items-center gap-1 text-amber-500 font-bold">
+                            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                            </svg>
+                            <span className="text-gray-900 font-bold">{dish.rating > 0 ? dish.rating : 5.0}</span>
+                            <span className="text-gray-400 font-normal">({dish.reviewCount || 0})</span>
+                          </div>
+                          <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold text-[11px]">
+                            • Đã bán {dish.soldCount || 0} suất
+                          </span>
+                        </div>
+
+                        {/* Title */}
+                        <Link
+                          to={`/food/${dish._id}`}
+                          className="block font-extrabold text-base text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1 mb-1.5"
+                        >
+                          {dish.name}
+                        </Link>
+
+                        {/* Description */}
+                        <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed mb-4">
+                          {dish.description}
+                        </p>
+                      </div>
+
+                      {/* Price & Action Buttons */}
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2 mt-auto">
+                        <div className="flex flex-col">
+                          <span className="text-xs text-gray-400 line-through leading-none mb-0.5">
+                            {originalPrice.toLocaleString()}đ
+                          </span>
+                          <span className="text-lg font-black text-red-700 tracking-tight leading-none">
+                            {price.toLocaleString()}đ
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          {/* Quick Add Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleQuickAdd(dish, e)}
+                            className="w-8 h-8 rounded-full border border-orange-200 bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white flex items-center justify-center font-bold text-base transition-all duration-150 shadow-2xs active:scale-95 cursor-pointer"
+                            title="Thêm nhanh vào giỏ"
+                          >
+                            +
+                          </button>
+
+                          {/* Mua ngay button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setModalFood(dish);
+                              setModalMode('buynow');
+                              setIsModalOpen(true);
+                            }}
+                            className="bg-[#991b1b] hover:bg-[#7f1d1d] text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-xs hover:shadow-sm active:scale-95 transition-all duration-150 whitespace-nowrap cursor-pointer"
+                          >
+                            Mua ngay
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <p>Chưa có món ăn nào.</p>
+            <div className="text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-100">
+              <p>Chưa có món ăn nổi bật nào.</p>
             </div>
           )}
         </div>
@@ -414,6 +616,16 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Product Customization Modal */}
+      {modalFood && (
+        <ProductCustomizationModal
+          product={modalFood}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          initialMode={modalMode}
+        />
+      )}
     </div>
   );
 };

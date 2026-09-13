@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useAuth from '../hooks/useAuth';
 import useCartStore from '../store/cartStore';
 
@@ -9,6 +9,20 @@ const Navbar = () => {
   const getItemCount = useCartStore((state) => state.getItemCount);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  // Đóng dropdown khi click bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isUserMenuOpen]);
 
   const handleLogout = () => {
     logout();
@@ -44,12 +58,7 @@ const Navbar = () => {
               Trang chủ
             </NavLink>
             <NavLink to="/menu" className={getNavLinkClass}>
-              <span className="relative inline-flex items-center">
-                Thực đơn
-                <span className="ml-1.5 px-1.5 py-0.2 bg-red-600 text-white text-[10px] font-black rounded-full uppercase tracking-wider">
-                  HOT
-                </span>
-              </span>
+              Thực đơn
             </NavLink>
             <NavLink to="/about" className={getNavLinkClass}>
               Về chúng tôi
@@ -72,7 +81,7 @@ const Navbar = () => {
 
             {/* User Menu */}
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center space-x-2 text-gray-700 hover:text-primary-600"

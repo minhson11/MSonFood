@@ -149,10 +149,10 @@ const FoodCard = ({ food, badgeType }) => {
                   <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                 </svg>
                 <span className="text-gray-800 text-[11px] font-bold">
-                  {food.rating ? food.rating.toFixed(1) : '4.9'}
+                  {food.rating ? Number(food.rating).toFixed(1) : '0.0'}
                 </span>
                 <span className="text-gray-400 text-[11px] font-normal">
-                  ({food.reviewCount || '1.2k'})
+                  ({food.reviewCount ?? 0})
                 </span>
               </div>
 

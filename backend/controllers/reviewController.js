@@ -1,6 +1,7 @@
 const Review = require('../models/Review');
 const Food = require('../models/Food');
 const Order = require('../models/Order');
+const User = require('../models/User');
 
 // @desc    Get reviews for a food
 // @route   GET /api/reviews/food/:foodId
@@ -259,12 +260,15 @@ exports.getOrderReviews = async (req, res, next) => {
 // @access  Private/Admin
 exports.getAllReviews = async (req, res, next) => {
   try {
-    const { rating, page = 1, limit = 20 } = req.query;
+    const { rating, foodId, page = 1, limit = 100 } = req.query;
 
     // Build query
     const query = {};
     if (rating) {
       query.rating = parseInt(rating);
+    }
+    if (foodId) {
+      query.food = foodId;
     }
 
     // Pagination
@@ -275,7 +279,7 @@ exports.getAllReviews = async (req, res, next) => {
     // Get reviews
     const reviews = await Review.find(query)
       .populate('user', 'name email avatar')
-      .populate('food', 'name image price')
+      .populate('food', 'name image price rating')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
@@ -283,15 +287,69 @@ exports.getAllReviews = async (req, res, next) => {
     // Get total count
     const total = await Review.countDocuments(query);
 
+    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = reviews.length > 0 ? parseFloat((totalRating / reviews.length).toFixed(1)) : 0;
+
     res.status(200).json({
       success: true,
       count: reviews.length,
+      averageRating,
       data: reviews,
       pagination: {
         page: pageNum,
         limit: limitNum,
         total,
         totalPages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get review statistics (Admin)
+// @route   GET /api/admin/reviews/stats
+// @access  Private/Admin
+exports.getReviewStats = async (req, res, next) => {
+  try {
+    const stats = await Review.aggregate([
+      {
+        $group: {
+          _id: '$food',
+          count: { $sum: 1 },
+          avgRating: { $avg: '$rating' },
+          hiddenCount: {
+            $sum: { $cond: [{ $eq: ['$isHidden', true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+
+    const statsMap = {};
+    let totalReviews = 0;
+    let totalRatingSum = 0;
+
+    stats.forEach((s) => {
+      if (s._id) {
+        const avg = parseFloat((s.avgRating || 0).toFixed(1));
+        statsMap[s._id.toString()] = {
+          count: s.count,
+          avgRating: avg,
+          hiddenCount: s.hiddenCount || 0
+        };
+        totalReviews += s.count;
+        totalRatingSum += avg * s.count;
+      }
+    });
+
+    const overallAvgRating = totalReviews > 0 ? parseFloat((totalRatingSum / totalReviews).toFixed(1)) : 0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        byFood: statsMap,
+        totalReviews,
+        overallAvgRating
       }
     });
   } catch (error) {
@@ -316,7 +374,7 @@ exports.adminDeleteReview = async (req, res, next) => {
     const foodId = review.food;
     await review.deleteOne();
 
-    // Update food rating
+    // Update food rating and reviewCount
     await updateFoodRating(foodId);
 
     res.status(200).json({
@@ -345,6 +403,9 @@ exports.adminToggleHideReview = async (req, res, next) => {
     review.isHidden = !review.isHidden;
     await review.save();
 
+    // Update food rating based on visible reviews
+    await updateFoodRating(review.food);
+
     res.status(200).json({
       success: true,
       message: review.isHidden ? 'Đã ẩn đánh giá' : 'Đã hiển thị đánh giá',
@@ -369,15 +430,16 @@ exports.adminGetFoodReviews = async (req, res, next) => {
 
     const reviews = await Review.find(query)
       .populate('user', 'name email avatar')
+      .populate('food', 'name image price rating')
       .sort({ createdAt: -1 });
 
     const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-    const averageRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+    const averageRating = reviews.length > 0 ? parseFloat((totalRating / reviews.length).toFixed(1)) : 0;
 
     res.status(200).json({
       success: true,
       count: reviews.length,
-      averageRating: parseFloat(averageRating),
+      averageRating,
       data: reviews
     });
   } catch (error) {
@@ -385,23 +447,42 @@ exports.adminGetFoodReviews = async (req, res, next) => {
   }
 };
 
-// Helper function to update food rating
+// Helper function to update food rating and review count
 async function updateFoodRating(foodId) {
   try {
-    const reviews = await Review.find({ food: foodId });
+    const visibleReviews = await Review.find({ food: foodId, isHidden: { $ne: true } });
+    const allReviews = await Review.find({ food: foodId });
 
-    if (reviews.length === 0) {
-      await Food.findByIdAndUpdate(foodId, { rating: 0 });
+    if (visibleReviews.length === 0) {
+      await Food.findByIdAndUpdate(foodId, { rating: 0, reviewCount: allReviews.length });
       return;
     }
 
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = (totalRating / reviews.length).toFixed(1);
+    const totalRating = visibleReviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = (totalRating / visibleReviews.length).toFixed(1);
 
     await Food.findByIdAndUpdate(foodId, {
-      rating: parseFloat(averageRating)
+      rating: parseFloat(averageRating),
+      reviewCount: allReviews.length
     });
   } catch (error) {
     console.error('Error updating food rating:', error);
   }
 }
+
+// Sync all foods with real reviews in DB
+exports.syncAllFoodRatings = async () => {
+  try {
+    const foods = await Food.find({});
+    for (const f of foods) {
+      await updateFoodRating(f._id);
+    }
+  } catch (err) {
+    console.error('Error syncing food ratings:', err);
+  }
+};
+
+// Run sync immediately on load to clean up any fake seed ratings
+setTimeout(() => {
+  exports.syncAllFoodRatings().catch(() => {});
+}, 1000);

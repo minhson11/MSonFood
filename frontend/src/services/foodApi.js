@@ -2,6 +2,8 @@ import api from './api';
 
 export const foodApi = {
   getAllFoods: (params) => api.get('/foods', { params }),
+
+  getFeaturedFoods: (params) => api.get('/foods/featured', { params }),
   
   getFoodById: (id) => api.get(`/foods/${id}`),
   

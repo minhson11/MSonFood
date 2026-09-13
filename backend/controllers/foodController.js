@@ -1,6 +1,7 @@
 const Food = require('../models/Food');
 const Category = require('../models/Category');
 const Topping = require('../models/Topping');
+const Order = require('../models/Order');
 
 // @desc    Get all foods with filters
 // @route   GET /api/foods
@@ -35,6 +36,9 @@ exports.getFoods = async (req, res, next) => {
       sortOptions.rating = -1;
     } else if (sort === 'rating_asc') {
       sortOptions.rating = 1;
+    } else if (sort === 'popular' || sort === 'sold_desc') {
+      sortOptions.soldCount = -1;
+      sortOptions.rating = -1;
     } else {
       sortOptions.createdAt = -1; // Default: newest first
     }
@@ -247,3 +251,66 @@ exports.deleteFood = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Get featured foods (highest purchase counts / soldCount)
+// @route   GET /api/foods/featured
+// @access  Public
+exports.getFeaturedFoods = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 4;
+
+    // Query available foods sorted by soldCount descending, then rating descending, then newest
+    const foods = await Food.find({ isAvailable: true })
+      .populate('category', 'name image')
+      .populate('toppings', 'name price description isActive')
+      .sort({ soldCount: -1, rating: -1, createdAt: -1 })
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      count: foods.length,
+      data: foods
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Sync real sales (soldCount) from all non-cancelled orders
+exports.syncAllFoodSales = async () => {
+  try {
+    const sales = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.food',
+          totalSold: { $sum: '$items.quantity' }
+        }
+      }
+    ]);
+
+    const salesMap = {};
+    sales.forEach(s => {
+      if (s._id) salesMap[s._id.toString()] = s.totalSold;
+    });
+
+    const allFoods = await Food.find({});
+    for (const food of allFoods) {
+      const realSold = salesMap[food._id.toString()] || 0;
+      if (food.soldCount !== realSold) {
+        food.soldCount = realSold;
+        await food.save();
+      }
+    }
+    console.log('✅ Synchronized soldCount for all foods from orders');
+  } catch (err) {
+    console.error('Error syncing food sales:', err);
+  }
+};
+
+// Auto sync on module load
+setTimeout(() => {
+  exports.syncAllFoodSales().catch(() => {});
+}, 1200);
+

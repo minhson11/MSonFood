@@ -5,8 +5,8 @@ const ProductHeader = ({ product, onClose }) => {
 
   if (!product) return null;
 
-  const rating = product.rating || 4.9;
-  const reviewCount = product.reviewCount || 128;
+  const rating = product.rating ? Number(product.rating).toFixed(1) : '0.0';
+  const reviewCount = product.reviewCount || 0;
 
   return (
     <div className="relative">
@@ -95,7 +95,7 @@ const ProductHeader = ({ product, onClose }) => {
                 <div className="flex text-amber-400 text-xs">
                   {'★'.repeat(5)}
                 </div>
-                <span className="font-bold text-xs">{rating.toFixed(1)}</span>
+                <span className="font-bold text-xs">{rating}</span>
               </div>
 
               <span className="text-xs text-gray-500 font-medium">

@@ -1,16 +1,38 @@
 const Category = require('../models/Category');
 
-// @desc    Get all categories
+// @desc    Get all categories with food count
 // @route   GET /api/categories
 // @access  Public
 exports.getCategories = async (req, res, next) => {
   try {
-    const categories = await Category.find().sort({ createdAt: -1 });
+    const Food = require('../models/Food');
+    const categories = await Category.find().sort({ createdAt: 1 });
+
+    // Aggregate food count per category
+    const foodCounts = await Food.aggregate([
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const countMap = {};
+    foodCounts.forEach((fc) => {
+      if (fc._id) countMap[fc._id.toString()] = fc.count;
+    });
+
+    const categoriesWithCount = categories.map((cat) => {
+      const catObj = cat.toObject();
+      catObj.foodCount = countMap[cat._id.toString()] || 0;
+      return catObj;
+    });
 
     res.status(200).json({
       success: true,
-      count: categories.length,
-      data: categories
+      count: categoriesWithCount.length,
+      data: categoriesWithCount
     });
   } catch (error) {
     next(error);
