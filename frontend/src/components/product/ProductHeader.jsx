@@ -56,6 +56,7 @@ const ProductHeader = ({ product, onClose }) => {
             <img
               src={product.image}
               alt={product.name}
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover"
             />
           ) : (

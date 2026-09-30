@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { adminOrderApi } from '../../services/adminApi';
-import Loading from '../../components/Loading';
-import ErrorMessage from '../../components/ErrorMessage';
-import Pagination from '../../components/Pagination';
+import Loading from '../../components/common/Loading';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import Pagination from '../../components/common/Pagination';
 
 const ManageOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -419,6 +419,16 @@ const ManageOrders = () => {
                           <span>{paymentIcons[order.paymentMethod]?.icon || '💵'}</span>
                           <span>{paymentIcons[order.paymentMethod]?.label || order.paymentMethod}</span>
                         </div>
+                        {/* Payment Status Badge */}
+                        {order.paymentMethod !== 'COD' && (
+                          <span className={`mt-1 inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            order.paymentStatus === 'paid'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>
+                            {order.paymentStatus === 'paid' ? '✓ Đã thanh toán' : '⏳ Chờ thanh toán'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Time */}
@@ -601,6 +611,55 @@ const ManageOrders = () => {
                 {selectedOrder.shippingAddress?.note && (
                   <div className="sm:col-span-2 italic text-gray-500">
                     <span className="text-gray-400">Ghi chú:</span> "{selectedOrder.shippingAddress.note}"
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Payment Details Card */}
+            <div className="bg-[#fcfbf9] p-4 rounded-2xl border border-gray-200/80 text-xs space-y-2">
+              <div className="font-bold text-gray-900 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">💳</span>
+                  <span>Thông tin thanh toán</span>
+                </div>
+                {selectedOrder.paymentStatus === 'paid' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    ✓ Đã thanh toán trực tuyến
+                  </span>
+                ) : selectedOrder.paymentMethod === 'COD' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-300">
+                    💵 Thanh toán khi nhận hàng (COD)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                    ⏳ Chờ thanh toán
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-gray-700 pt-0.5">
+                <div>
+                  <span className="text-gray-400">Phương thức:</span>{' '}
+                  <strong className="text-gray-900">
+                    {paymentIcons[selectedOrder.paymentMethod]?.label || selectedOrder.paymentMethod}
+                  </strong>
+                </div>
+                {selectedOrder.paymentDetails?.transactionId && (
+                  <div>
+                    <span className="text-gray-400">Mã giao dịch:</span>{' '}
+                    <span className="font-mono font-bold text-gray-900">{selectedOrder.paymentDetails.transactionId}</span>
+                  </div>
+                )}
+                {selectedOrder.paymentDetails?.bankCode && (
+                  <div>
+                    <span className="text-gray-400">Ngân hàng/Ví:</span>{' '}
+                    <span className="font-bold text-gray-900">{selectedOrder.paymentDetails.bankCode}</span>
+                  </div>
+                )}
+                {selectedOrder.paymentDetails?.paidAt && (
+                  <div>
+                    <span className="text-gray-400">Thời gian trả:</span>{' '}
+                    <span className="text-gray-900">{new Date(selectedOrder.paymentDetails.paidAt).toLocaleString('vi-VN')}</span>
                   </div>
                 )}
               </div>

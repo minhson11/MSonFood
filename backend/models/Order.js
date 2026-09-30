@@ -72,10 +72,27 @@ const orderSchema = new mongoose.Schema({
       default: ''
     }
   },
+  orderCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true
+  },
   paymentMethod: {
     type: String,
     enum: ['COD', 'ONLINE', 'VNPAY', 'MOMO', 'CARD'],
     default: 'COD'
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed'],
+    default: 'pending'
+  },
+  paymentDetails: {
+    bankCode: { type: String, default: '' },
+    cardType: { type: String, default: '' },
+    transactionId: { type: String, default: '' },
+    paidAt: { type: Date }
   },
   subtotal: {
     type: Number,

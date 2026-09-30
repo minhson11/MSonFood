@@ -236,3 +236,13 @@
   animation: menuFloat3 4.6s ease-in-out infinite 1.2s;
 }
 
+/* Rating Badge hero — nổi ngoài ảnh, lên xuống nhẹ nhàng */
+@keyframes floatBadge {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+.animate-float-badge {
+  animation: floatBadge 3.2s ease-in-out infinite;
+}
+
+

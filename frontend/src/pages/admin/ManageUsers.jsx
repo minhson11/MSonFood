@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { userApi } from '../../services/adminApi';
-import Loading from '../../components/Loading';
-import ErrorMessage from '../../components/ErrorMessage';
-import ConfirmDialog from '../../components/ConfirmDialog';
-import Pagination from '../../components/Pagination';
+import Loading from '../../components/common/Loading';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import Pagination from '../../components/common/Pagination';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);

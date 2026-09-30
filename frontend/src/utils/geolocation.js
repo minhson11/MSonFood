@@ -56,8 +56,38 @@ export const getRealLocation = async () => {
         const longitude = pos.coords.longitude;
         const accuracy = pos.coords.accuracy;
 
+        // 1. Ưu tiên BigDataCloud Reverse Geocoding API (rất nhanh, miễn phí, không bị chặn DNS tại VN)
         try {
-          // 1. Thử reverse geocoding với OpenStreetMap Nominatim
+          const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=vi`;
+          const bdcRes = await fetch(bdcUrl);
+          if (bdcRes.ok) {
+            const bdcData = await bdcRes.json();
+            const parts = [
+              bdcData.locality,
+              bdcData.city,
+              bdcData.principalSubdivision,
+            ].filter(Boolean);
+
+            if (parts.length > 0) {
+              resolve({
+                lat: latitude,
+                lng: longitude,
+                accuracy,
+                formattedAddress: parts.join(', '),
+                city: bdcData.city || bdcData.principalSubdivision || '',
+                district: bdcData.locality || '',
+                ward: '',
+                displayName: parts.join(', '),
+              });
+              return;
+            }
+          }
+        } catch {
+          // Tự động chuyển tiếp sang phương án dự phòng
+        }
+
+        // 2. Dự phòng: Thử OpenStreetMap Nominatim
+        try {
           const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
           const response = await fetch(nominatimUrl, {
             headers: {
@@ -107,37 +137,8 @@ export const getRealLocation = async () => {
             });
             return;
           }
-        } catch (e) {
-          console.warn('Nominatim reverse geocode error, trying fallback...', e);
-        }
-
-        // 2. Fallback: BigDataCloud Reverse Geocoding API
-        try {
-          const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=vi`;
-          const bdcRes = await fetch(bdcUrl);
-          if (bdcRes.ok) {
-            const bdcData = await bdcRes.json();
-            const locality = [
-              bdcData.locality,
-              bdcData.city,
-              bdcData.principalSubdivision,
-              bdcData.countryName,
-            ]
-              .filter(Boolean)
-              .join(', ');
-
-            resolve({
-              lat: latitude,
-              lng: longitude,
-              accuracy,
-              formattedAddress: locality || `Tọa độ GPS (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`,
-              city: bdcData.city || bdcData.principalSubdivision,
-              district: bdcData.locality,
-            });
-            return;
-          }
-        } catch (err) {
-          console.warn('BigDataCloud reverse geocode error:', err);
+        } catch {
+          // Lỗi DNS hoặc chặn mạng được bắt êm để không làm đỏ console
         }
 
         resolve({
@@ -284,8 +285,8 @@ export const searchAddressSuggestions = async (query) => {
         }
       });
     }
-  } catch (error) {
-    console.warn('Nominatim geocoding error:', error);
+  } catch {
+    // Bỏ qua nếu DNS Nominatim không phản hồi
   }
 
   return results.slice(0, 6);

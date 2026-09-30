@@ -3,21 +3,28 @@ import MainLayout from '../layouts/MainLayout';
 import AdminLayout from '../layouts/AdminLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 
-// Pages
-import Home from '../pages/Home';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import ForgotPassword from '../pages/ForgotPassword';
-import ResetPassword from '../pages/ResetPassword';
-import Menu from '../pages/Menu';
-import FoodDetail from '../pages/FoodDetail';
-import About from '../pages/About';
-import Cart from '../pages/Cart';
-import Checkout from '../pages/Checkout';
-import Orders from '../pages/Orders';
-import OrderDetail from '../pages/OrderDetail';
-import OrderSuccess from '../pages/OrderSuccess';
-import Profile from '../pages/Profile';
+// Pages - Auth
+import Login from '../pages/auth/Login';
+import Register from '../pages/auth/Register';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
+
+// Pages - Public
+import Home from '../pages/public/Home';
+import Menu from '../pages/public/Menu';
+import FoodDetail from '../pages/public/FoodDetail';
+import About from '../pages/public/About';
+import ComboHot from '../pages/public/ComboHot';
+import Contact from '../pages/public/Contact';
+
+// Pages - User
+import Cart from '../pages/user/Cart';
+import Checkout from '../pages/user/Checkout';
+import Orders from '../pages/user/Orders';
+import OrderDetail from '../pages/user/OrderDetail';
+import OrderSuccess from '../pages/user/OrderSuccess';
+import PaymentGateway from '../pages/user/PaymentGateway';
+import Profile from '../pages/user/Profile';
 
 // Admin Pages
 import Dashboard from '../pages/admin/Dashboard';
@@ -47,6 +54,14 @@ const router = createBrowserRouter([
         element: <About />,
       },
       {
+        path: 'combo-hot',
+        element: <ComboHot />,
+      },
+      {
+        path: 'contact',
+        element: <Contact />,
+      },
+      {
         path: 'food/:id',
         element: <FoodDetail />,
       },
@@ -59,6 +74,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute requireAuth>
             <Checkout />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'payment/:id',
+        element: (
+          <ProtectedRoute requireAuth>
+            <PaymentGateway />
           </ProtectedRoute>
         ),
       },

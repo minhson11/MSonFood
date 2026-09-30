@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { adminToppingApi, adminFoodApi, adminCategoryApi } from '../../services/adminApi';
-import Loading from '../../components/Loading';
-import ErrorMessage from '../../components/ErrorMessage';
-import ConfirmDialog from '../../components/ConfirmDialog';
+import Loading from '../../components/common/Loading';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const ManageToppings = () => {
   // Main state

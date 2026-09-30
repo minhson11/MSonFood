@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { adminFoodApi, adminCategoryApi } from '../../services/adminApi';
-import Loading from '../../components/Loading';
-import ErrorMessage from '../../components/ErrorMessage';
-import ConfirmDialog from '../../components/ConfirmDialog';
+import Loading from '../../components/common/Loading';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const ManageFoods = () => {
   const [foods, setFoods] = useState([]);
@@ -17,6 +17,7 @@ const ManageFoods = () => {
   const [selectedFood, setSelectedFood] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [foodToDelete, setFoodToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -117,13 +118,18 @@ const ManageFoods = () => {
   };
 
   const handleDeleteConfirm = async () => {
+    if (!foodToDelete) return;
     try {
+      setDeleting(true);
+      setError('');
       await adminFoodApi.deleteFood(foodToDelete._id);
       setShowDeleteDialog(false);
       setFoodToDelete(null);
-      fetchFoods();
+      await fetchFoods();
     } catch (err) {
       setError(err.message || 'Không thể xóa món ăn');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -211,7 +217,7 @@ const ManageFoods = () => {
                 <td className="px-6 py-4">
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
                     {food.image ? (
-                      <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
+                      <img src={food.image} alt={food.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -484,7 +490,7 @@ const ManageFoods = () => {
                 />
                 {formData.image && (
                   <div className="mt-3">
-                    <img src={formData.image} alt="Preview" className="w-32 h-32 object-cover rounded-lg" />
+                    <img src={formData.image} alt="Preview" referrerPolicy="no-referrer" className="w-32 h-32 object-cover rounded-lg" />
                   </div>
                 )}
               </div>
@@ -537,18 +543,22 @@ const ManageFoods = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      {showDeleteDialog && (
+      {showDeleteDialog && foodToDelete && (
         <ConfirmDialog
-          title="Xác nhận xóa"
-          message={`Bạn có chắc chắn muốn xóa món "${foodToDelete?.name}"? Hành động này không thể hoàn tác.`}
-          confirmText="Xóa"
+          isOpen={showDeleteDialog}
+          title="Xác nhận xóa món ăn"
+          message={`Bạn có chắc chắn muốn xóa món "${foodToDelete.name}"? Thao tác này sẽ xóa vĩnh viễn món ăn khỏi thực đơn.`}
+          confirmText="Xóa món"
           cancelText="Hủy"
           onConfirm={handleDeleteConfirm}
-          onCancel={() => {
-            setShowDeleteDialog(false);
-            setFoodToDelete(null);
+          onClose={() => {
+            if (!deleting) {
+              setShowDeleteDialog(false);
+              setFoodToDelete(null);
+            }
           }}
           type="danger"
+          loading={deleting}
         />
       )}
     </div>

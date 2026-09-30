@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { adminCategoryApi, adminFoodApi } from '../../services/adminApi';
-import Loading from '../../components/Loading';
-import ErrorMessage from '../../components/ErrorMessage';
-import ConfirmDialog from '../../components/ConfirmDialog';
+import Loading from '../../components/common/Loading';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 // Preset sample images for quick selection when creating/editing categories
 const PRESET_IMAGES = [

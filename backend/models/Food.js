@@ -15,6 +15,21 @@ const foodSchema = new mongoose.Schema({
     required: [true, 'Giá là bắt buộc'],
     min: [0, 'Giá phải lớn hơn hoặc bằng 0']
   },
+  originalPrice: {
+    type: Number,
+    default: 0
+  },
+  badge: {
+    type: String,
+    default: ''
+  },
+  comboGroup: {
+    type: String,
+    default: ''
+  },
+  items: [{
+    type: String
+  }],
   image: {
     type: String,
     default: ''
