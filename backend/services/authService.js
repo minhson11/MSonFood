@@ -12,6 +12,9 @@ const formatUserResponse = (user) => ({
   phone: user.phone,
   avatar: user.avatar,
   address: user.address,
+  gender: user.gender,
+  birthday: user.birthday,
+  location: user.location,
   role: user.role,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
@@ -89,7 +92,7 @@ const updateProfile = async (userId, { name, phone, address, avatar, gender, bir
   if (location !== undefined) user.location = location;
 
   await user.save();
-  return user;
+  return formatUserResponse(user);
 };
 
 /**

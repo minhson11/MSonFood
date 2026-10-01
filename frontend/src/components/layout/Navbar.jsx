@@ -126,8 +126,12 @@ const Navbar = () => {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-1.5 rounded-full border border-gray-200 bg-white"
                 >
-                  <div className="w-7 h-7 bg-orange-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {user?.name?.charAt(0).toUpperCase()}
+                  <div className="w-7 h-7 bg-orange-600 text-white text-xs font-bold rounded-full flex items-center justify-center overflow-hidden">
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      user?.name?.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <span className="text-xs font-semibold text-gray-800">Tài khoản</span>
                   <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

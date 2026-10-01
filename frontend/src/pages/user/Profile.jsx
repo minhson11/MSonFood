@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import authApi from '../../services/authApi';
 import Loading from '../../components/common/Loading';
 import MapPreview from '../../components/common/MapPreview';
+import AvatarCropModal from '../../components/common/AvatarCropModal';
 import { getRealLocation, searchAddressSuggestions, geocodeAddress } from '../../utils/geolocation';
 
 const Profile = () => {
@@ -29,6 +30,13 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Avatar states
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [rawImageForCrop, setRawImageForCrop] = useState(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const avatarInputRef = useRef(null);
+
   // Address search & autocomplete states
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -47,8 +55,65 @@ const Profile = () => {
         birthday: user.birthday || '',
         location: user.location || null,
       });
+      // Sync avatar preview with stored user avatar
+      setAvatarPreview(user.avatar || null);
     }
   }, [user]);
+
+  // 1. Khi chọn file ảnh: đọc thành dataURL rồi mở modal chỉnh sửa / cắt ảnh
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Vui lòng chọn file ảnh hợp lệ (JPG, PNG, WEBP...)');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Ảnh gốc không được vượt quá 10MB');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setRawImageForCrop(reader.result);
+      setShowCropModal(true);
+    };
+    reader.onerror = () => {
+      setError('Không thể đọc file ảnh');
+    };
+    reader.readAsDataURL(file);
+
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+  };
+
+  // 2. Khi người dùng xác nhận lưu sau khi cắt ảnh trong modal
+  const handleCropSave = async (croppedBase64) => {
+    setAvatarLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      setAvatarPreview(croppedBase64);
+
+      // Lưu avatar vào database MongoDB
+      const response = await authApi.updateProfile({ avatar: croppedBase64 });
+      updateUser(response.data);
+      setShowCropModal(false);
+      setRawImageForCrop(null);
+      setSuccess('Cập nhật ảnh đại diện thành công!');
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (err) {
+      setError(err.message || 'Không thể cập nhật ảnh đại diện');
+      setAvatarPreview(user?.avatar || null);
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
 
   // Xử lý khi người dùng nhập tay địa chỉ trong Profile
   const handleAddressInputChange = (e) => {
@@ -232,16 +297,64 @@ const Profile = () => {
             <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
               <div className="text-center">
                 {/* Avatar with edit button */}
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  id="avatar-upload-input"
+                />
                 <div className="relative inline-block mb-4">
-                  <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                  <button className="absolute bottom-0 right-0 w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white hover:bg-orange-700 transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarLoading}
+                    title="Bấm để thay đổi ảnh đại diện"
+                    className="relative w-24 h-24 rounded-full overflow-hidden group focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+                  >
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-3xl font-bold">
+                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+                      {avatarLoading ? (
+                        <svg className="w-6 h-6 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      )}
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarLoading}
+                    className="absolute bottom-0 right-0 w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white hover:bg-orange-700 transition-colors shadow-md disabled:opacity-60"
+                  >
+                    {avatarLoading ? (
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
                   </button>
                 </div>
+                <p className="text-xs text-gray-400 mb-2">Bấm vào ảnh để thay đổi</p>
+
                 
                 <h2 className="text-xl font-bold text-gray-900">{user?.name}</h2>
                 <p className="text-sm text-gray-500">Thành viên Hạng Bạc</p>
@@ -719,6 +832,19 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal chỉnh sửa & cắt ảnh đại diện */}
+      {showCropModal && rawImageForCrop && (
+        <AvatarCropModal
+          imageSrc={rawImageForCrop}
+          onSave={handleCropSave}
+          onClose={() => {
+            setShowCropModal(false);
+            setRawImageForCrop(null);
+          }}
+          saving={avatarLoading}
+        />
+      )}
     </div>
   );
 };
