@@ -1,4 +1,5 @@
 import axios from 'axios';
+import useAuthStore from '../store/authStore';
 
 const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const baseURL = rawBaseUrl.replace(/\/+$/, '');
@@ -33,9 +34,14 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+
+    if (error.response?.status === 401 && !isLoginEndpoint) {
+      useAuthStore.getState().logout();
       localStorage.removeItem('auth-storage');
-      window.location.href = '/login';
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error.response?.data || error.message);
   }

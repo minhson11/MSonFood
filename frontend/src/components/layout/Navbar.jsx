@@ -207,10 +207,26 @@ const Navbar = () => {
               )}
             </Link>
 
+            {/* Mobile Avatar Quick Access (khi đã login) */}
+            {isAuthenticated && (
+              <Link
+                to={user?.role === 'admin' ? '/admin' : '/profile'}
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white font-bold text-xs flex items-center justify-center shadow-xs overflow-hidden border border-orange-200"
+                title={user?.name || 'Tài khoản'}
+              >
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user?.name ? user.name.charAt(0).toUpperCase() : 'A'
+                )}
+              </Link>
+            )}
+
             {/* Mobile Hamburger Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 text-gray-700"
+              className="p-2 text-gray-700 rounded-lg hover:bg-gray-100 transition"
+              aria-label="Menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMenuOpen ? (
@@ -225,29 +241,132 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden pb-4">
-            <div className="flex flex-col space-y-4">
-              <Link to="/" className="text-gray-700 hover:text-[#ea580c]" onClick={() => setIsMenuOpen(false)}>
+          <div className="md:hidden pb-5 pt-3 border-t border-gray-100 animate-fadeIn">
+            {/* Header info khi đã đăng nhập */}
+            {isAuthenticated ? (
+              <div className="mb-4 p-3.5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl border border-orange-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white font-bold text-sm flex items-center justify-center shadow-xs overflow-hidden shrink-0">
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      user?.name ? user.name.charAt(0).toUpperCase() : 'A'
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-gray-900 truncate">
+                      {user?.name || 'Người dùng'}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {user?.email || 'admin@msonfood.com'}
+                    </div>
+                  </div>
+                  {user?.role === 'admin' ? (
+                    <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-orange-600 text-white rounded-full">
+                      Admin
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-bold bg-gray-200 text-gray-700 rounded-full">
+                      Thành viên
+                    </span>
+                  )}
+                </div>
+
+                {/* Nút vào Quản trị hệ thống dành riêng cho Admin trên mobile */}
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-orange-500/20 transition"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span>Quản trị hệ thống (Admin)</span>
+                  </Link>
+                )}
+              </div>
+            ) : null}
+
+            {/* Navigation links */}
+            <div className="flex flex-col space-y-3 font-medium text-sm">
+              <Link to="/" className="text-gray-700 hover:text-[#ea580c] py-1 transition-colors" onClick={() => setIsMenuOpen(false)}>
                 Trang chủ
               </Link>
-              <Link to="/menu" className="text-gray-700 hover:text-[#ea580c]" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/menu" className="text-gray-700 hover:text-[#ea580c] py-1 transition-colors" onClick={() => setIsMenuOpen(false)}>
                 Thực đơn
               </Link>
-              <Link to="/combo-hot" className="text-gray-700 hover:text-[#ea580c]" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/combo-hot" className="text-gray-700 hover:text-[#ea580c] py-1 transition-colors" onClick={() => setIsMenuOpen(false)}>
                 Combo Hot
               </Link>
-              <Link to="/about" className="text-gray-700 hover:text-[#ea580c]" onClick={() => setIsMenuOpen(false)}>
+              <Link to="/about" className="text-gray-700 hover:text-[#ea580c] py-1 transition-colors" onClick={() => setIsMenuOpen(false)}>
                 Về chúng tôi
               </Link>
-              <Link to="/cart" className="text-gray-700 hover:text-primary-600">
-                Giỏ hàng
+              <Link to="/cart" className="text-gray-700 hover:text-[#ea580c] py-1 flex items-center justify-between transition-colors" onClick={() => setIsMenuOpen(false)}>
+                <span>Giỏ hàng</span>
+                {cartItemCount > 0 && (
+                  <span className="bg-orange-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                    {cartItemCount}
+                  </span>
+                )}
               </Link>
-              <Link to="/login" className="btn-outline text-sm">
-                Đăng nhập
-              </Link>
-              <Link to="/register" className="btn-primary text-sm">
-                Đăng ký
-              </Link>
+
+              {/* Các liên kết tài khoản khi đã đăng nhập */}
+              {isAuthenticated ? (
+                <>
+                  <hr className="my-1 border-gray-100" />
+                  <Link
+                    to="/profile"
+                    className="text-gray-700 hover:text-[#ea580c] py-1 flex items-center gap-2.5 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span>Hồ sơ cá nhân</span>
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="text-gray-700 hover:text-[#ea580c] py-1 flex items-center gap-2.5 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>Đơn hàng của tôi</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="text-left text-red-600 hover:text-red-700 py-2 font-semibold flex items-center gap-2.5 mt-1 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Đăng xuất</span>
+                  </button>
+                </>
+              ) : (
+                /* Khi chưa đăng nhập */
+                <div className="pt-2 flex flex-col gap-2.5">
+                  <Link
+                    to="/login"
+                    className="w-full text-center py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:border-orange-500 hover:text-orange-600 transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Đăng nhập
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="w-full text-center py-2.5 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 shadow-xs transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Đăng ký
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

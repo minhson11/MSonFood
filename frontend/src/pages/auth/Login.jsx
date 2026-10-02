@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import authApi from '../../services/authApi';
 import useAuth from '../../hooks/useAuth';
@@ -6,7 +6,7 @@ import Loading from '../../components/common/Loading';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setAuth } = useAuth();
+  const { setAuth, isAuthenticated, user, isHydrated } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -15,6 +15,17 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Nếu đã đăng nhập thì tự động chuyển hướng đúng trang tương ứng
+  useEffect(() => {
+    if (isHydrated && isAuthenticated) {
+      if (user?.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [isHydrated, isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

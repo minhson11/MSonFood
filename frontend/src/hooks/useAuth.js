@@ -1,7 +1,7 @@
 import useAuthStore from '../store/authStore';
 
 const useAuth = () => {
-  const { user, token, isAuthenticated, setAuth, logout, updateUser } = useAuthStore();
+  const { user, token, isAuthenticated, isHydrated, setAuth, logout, updateUser } = useAuthStore();
 
   const isAdmin = user?.role === 'admin';
   const isCustomer = user?.role === 'customer';
@@ -10,6 +10,7 @@ const useAuth = () => {
     user,
     token,
     isAuthenticated,
+    isHydrated,
     isAdmin,
     isCustomer,
     setAuth,
